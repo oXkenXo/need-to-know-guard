@@ -1,0 +1,219 @@
+- path: HR/Compensation 2026/Salary Bands 2026.xlsx
+  owner: skim
+  date: 2026-01-22
+  need: ["@hr", mchen, dreyes, pnair]
+  case: C01
+  sheet:
+    columns: [Band, Example roles, Min (USD/yr), Mid (USD/yr), Max (USD/yr)]
+    rows:
+      - [B1, "Picker, Junior Coordinator", 24000, 28000, 32000]
+      - [B2, "Coordinator, Specialist", 32000, 38000, 45000]
+      - [B3, "Senior Specialist, Analyst, Sysadmin", 45000, 54000, 63000]
+      - [B4, "Manager", 63000, 76000, 90000]
+      - [B5, "Chief officer", 110000, 135000, 160000]
+
+- path: HR/Compensation 2026/Salary Review Proposals - Oct 2026.xlsx
+  owner: skim
+  date: 2026-10-07
+  need: ["@hr", mchen, dreyes, pnair]
+  case: C01
+  sheet:
+    columns: [Employee, Department, Current salary (USD), Proposed increase, Manager comment]
+    rows:
+      - [Grace Li, Finance, 58000, 5%, "Key to year-end close"]
+      - [Ben Carter, Marketing, 41000, 0%, "Performance plan in progress"]
+      - [Emma Novak, Operations, 36000, 6%, "Covering warehouse gaps"]
+      - [Nora Weiss, IT, 56000, 4%, "Mail migration delivered"]
+      - [Grace Lin, Marketing, 39000, 3%, ""]
+      - [Ravi Shah, Operations, 40000, 3%, ""]
+
+- path: HR/Compensation 2026/Severance Estimates - Restructuring.xlsx
+  owner: skim
+  date: 2026-10-15
+  need: [skim, pnair, dreyes, mchen]
+  case: C01
+  sheet:
+    columns: [Position, Department, Years of service, Estimated severance (USD), Notes]
+    rows:
+      - [Warehouse picker (1 role), Operations, 3, 9500, "Selection criteria to be agreed"]
+      - [First-line IT support, IT, 4, 14200, "Outsourcing vendor shortlist pending"]
+      - [Warehouse supervisor, Operations, "-", 0, "Vacant since 30 Sep (Ethan Brooks resigned)"]
+      - [Marketing analyst, Marketing, "-", 0, "Vacant after Alex Turner's transfer"]
+
+- path: HR/Benefits Guide 2026.docx
+  owner: skim
+  date: 2026-02-03
+  need: ["@all"]
+  body: |
+    # Benefits Guide 2026
+    ## Health insurance
+    All permanent employees are covered from the first day of employment. Spouses and up to three children can be added at no extra cost.
+    ## Annual leave
+    18 days per year, plus public holidays. Up to 5 unused days can be carried over to the next year.
+    ## Learning budget
+    USD 600 per person per year for courses, books or conferences. Ask your manager before booking.
+    ## Wellbeing
+    Free counselling sessions through our employee assistance programme (6 sessions per year).
+
+- path: HR/Performance Reviews/2026-Q3/Review - Ben Carter.docx
+  owner: tbecker
+  date: 2026-10-05
+  need: [skim, tbecker, jrossi, bcarter]
+  case: C02
+  body: |
+    # Performance Review — Q3 2026 — Ben Carter (Digital Marketing Specialist)
+    Reviewer: Julia Rossi · HR: Tom Becker
+    ## Summary
+    Ben missed two of three quarterly goals. Paid-social campaigns launched late and the September newsletter went out with broken tracking links.
+    ## Strengths
+    Creative ideas for the launch event were well received; good relationships with the agency.
+    ## Development plan
+    A 60-day performance improvement plan starts on 12 October with weekly check-ins. Salary increase is on hold until the plan is completed.
+    Shared with external coach (Northlake Coaching) for the leadership programme.
+
+- path: HR/Performance Reviews/2026-Q3/Review - Emma Novak.docx
+  owner: tbecker
+  date: 2026-10-06
+  need: [skim, tbecker, cmendes, enovak]
+  body: |
+    # Performance Review — Q3 2026 — Emma Novak (Logistics Coordinator)
+    Reviewer: Carlos Mendes · HR: Tom Becker
+    Emma exceeded expectations. She covered warehouse scheduling after the supervisor left and kept on-time delivery above 93% despite the gap.
+    Recommendation: 6% increase and nomination for the supervisor role if it is reopened.
+
+- path: HR/Performance Reviews/Review Cycle Q3 - Timeline.docx
+  owner: tbecker
+  date: 2026-09-15
+  need: ["@managers", "@hr"]
+  body: |
+    # Q3 Review Cycle — Timeline for Managers
+    - 15–26 Sep: managers write reviews in the HR template.
+    - 29 Sep–3 Oct: calibration meeting per department with HR.
+    - 6–10 Oct: one-to-one conversations with employees.
+    - 13 Oct: final reviews uploaded to HR/Performance Reviews.
+    Salary proposals go to Sarah Kim by 7 October.
+
+- path: HR/Recruitment/Hiring Pipeline - Oct 2026.xlsx
+  owner: lortiz
+  date: 2026-10-14
+  need: ["@hr", jrossi, kpark]
+  sheet:
+    columns: [Role, Department, Stage, Candidates, Target start]
+    rows:
+      - [Graphic Designer, Marketing, Hired (Aisha Bello), 1, 2026-10-13]
+      - [Marketing Analyst, Marketing, On hold (restructuring), 0, "-"]
+      - [IT Support Technician, IT, On hold (outsourcing review), 3, "-"]
+      - [Warehouse Supervisor, Operations, Not opened, 0, "-"]
+
+- path: HR/Recruitment/Interview Notes - Graphic Designer.docx
+  owner: lortiz
+  date: 2026-09-22
+  need: [lortiz, skim, jrossi]
+  body: |
+    # Interview Notes — Graphic Designer
+    ## Aisha Bello
+    Strong portfolio (packaging and social). Salary expectation USD 40,000; offer made at 39,000 plus learning budget. Start date 13 October.
+    ## Candidate B
+    Good motion design, weak print experience. Expected USD 47,000 — above band.
+    Decision: hire Aisha Bello. References checked on 24 September.
+
+- path: HR/Onboarding/Aisha Bello/Welcome Pack - Aisha Bello.docx
+  owner: skim
+  date: 2026-10-10
+  need: [skim, tbecker, abello, jrossi]
+  body: |
+    # Welcome to Meridian Labs, Aisha!
+    Your first week:
+    - Monday 13 Oct: IT setup with Kevin Park (laptop, accounts, badge).
+    - Tuesday: brand guidelines walkthrough with Julia Rossi.
+    - Wednesday: meet the Operations team at the warehouse.
+    - Friday: lunch with the Marketing team.
+    Your buddy is Grace Lin. Please read the Acceptable Use Policy and the Benefits Guide.
+
+- path: HR/Onboarding/New Hire Checklist.docx
+  owner: tbecker
+  date: 2026-03-01
+  need: ["@hr", kpark]
+  body: |
+    # New Hire Checklist (HR + IT)
+    - Contract signed and filed
+    - Directory account created and added to department group
+    - Mailbox and mailing lists
+    - Laptop and badge issued
+    - Mandatory trainings booked (security awareness, data protection)
+
+- path: HR/Offboarding/Offboarding - Ethan Brooks.docx
+  owner: tbecker
+  date: 2026-09-26
+  need: [skim, tbecker, kpark, cmendes]
+  body: |
+    # Offboarding — Ethan Brooks (Warehouse Supervisor)
+    Last working day: 30 September 2026.
+    - [x] Resignation letter received (1 September)
+    - [x] Final pay calculated (Omar Haddad)
+    - [x] Badge returned
+    - [ ] IT: disable directory account, mailbox and file access (ticket sent to Kevin Park on 26 Sep)
+    - [ ] Remove from operations group and mailing lists
+
+- path: HR/Offboarding/Transfer - Alex Turner to Finance.docx
+  owner: tbecker
+  date: 2026-09-24
+  need: [skim, tbecker, kpark, jrossi, mchen, aturner]
+  body: |
+    # Internal Transfer — Alex Turner
+    From: Marketing Analyst (Marketing) — To: Financial Analyst (Finance). Effective 1 October 2026.
+    - [x] New contract addendum signed
+    - [x] Added to finance group
+    - [ ] Remove from marketing group and marketing@ list
+    - [ ] Hand over Q4 campaign dashboards to Ben Carter
+
+- path: HR/Policies/Leave Policy 2026.docx
+  owner: skim
+  date: 2026-01-10
+  need: ["@all"]
+  body: |
+    # Leave Policy 2026
+    Annual leave must be requested in the HR portal at least two weeks in advance for periods longer than three days. Sick leave longer than two days requires a doctor's note. Parental leave follows national law plus two extra paid weeks.
+
+- path: HR/Employee Relations/Grievance - Warehouse - Sept 2026.docx
+  owner: skim
+  date: 2026-09-12
+  need: [skim, tbecker, cmendes]
+  body: |
+    # Grievance Record — Warehouse (confidential)
+    Raised by: Emma Novak on 10 September 2026.
+    Concern: repeated last-minute shift changes and raised voices from the warehouse supervisor during the August peak.
+    Actions: meeting with Carlos Mendes on 15 September. The supervisor resigned on 1 September (effective 30 September), so no disciplinary process was opened. Emma asked that her name is not shared with the warehouse team.
+
+# ---------- personal
+- path: Drafts/HR Plan 2027 - notes.md
+  owner: skim
+  date: 2026-10-08
+  need: [skim]
+  body: |
+    # HR plan 2027 — rough notes
+    - Restructuring letters: need final list from Priya by 15 Nov.
+    - Replace annual reviews with quarterly check-ins?
+    - Benefits: dental add-on quote from insurer due next week.
+    - Training: security awareness again after the August phishing incident.
+
+- path: Drafts/Exit interview questions.md
+  owner: tbecker
+  date: 2026-09-20
+  need: [tbecker]
+  body: |
+    # Exit interview — question bank
+    - What made you decide to leave?
+    - What could your manager have done differently?
+    - Would you recommend Meridian Labs to a friend? Why / why not?
+    Used for: Ethan Brooks (28 Sep).
+
+- path: Drafts/Sourcing channels comparison.md
+  owner: lortiz
+  date: 2026-08-28
+  need: [lortiz]
+  body: |
+    # Sourcing channels — cost per hire (2026 YTD)
+    - Job boards: USD 1,900 per hire, slow for design roles.
+    - Referrals: USD 600 per hire (bonus), best quality.
+    - Agency: USD 7,800 per hire — only for senior IT roles.

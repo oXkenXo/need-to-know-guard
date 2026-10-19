@@ -1,0 +1,239 @@
+# Emails. Fields: id, date, from, to, cc, subject, reply_to (id of the message answered), body,
+#   need  (optional) who needs to know. Default = sender + intended recipients (lists expanded).
+#   case  planted case id (optional)
+# Addresses: a uid means <uid>@meridian.test; "list:<name>" means the mailing list <name>@meridian.test.
+
+# ---------------- IT: mail migration (context for C11)
+- id: m001
+  date: 2026-07-29 10:05
+  from: kpark
+  to: [nweiss]
+  subject: Mail migration weekend - plan
+  body: |
+    Hi Nora,
+
+    Board approved the migration window: Friday 8 Aug 18:00 to Saturday noon.
+    Please follow the runbook in IT/Projects. For high-priority mail, set a temporary copy of the CEO mailbox to yourself for one week so we can confirm nothing gets lost.
+
+    Kevin
+
+- id: m002
+  date: 2026-07-29 11:20
+  from: nweiss
+  to: [kpark]
+  subject: "Re: Mail migration weekend - plan"
+  reply_to: m001
+  body: |
+    Will do. I'll add the copy rule dreyes -> nweiss on the new server on Monday 4 Aug and remove it after your sign-off.
+
+    Nora
+
+- id: m003
+  date: 2026-08-12 16:40
+  from: kpark
+  to: [nweiss, pnair]
+  subject: Mail migration - sign-off
+  body: |
+    Hi both,
+
+    Migration is signed off. All mailboxes synced, webmail works, no missing mail reported.
+    Nora, please clean up the temporary rules this week.
+
+    Thanks,
+    Kevin
+
+# ---------------- Executive: Falcon + board (CEO mail also copied to nweiss by C11)
+- id: m010
+  date: 2026-09-16 08:47
+  from: pnair
+  to: [dreyes]
+  subject: Coastline - first call notes
+  body: |
+    Daniel,
+
+    Had the first call with Coastline's founders. They are open to a sale if the team stays together; the CTO is the key person.
+    They mentioned another buyer looked at them last year at around 10M. I think 11M opening is credible.
+
+    Priya
+
+- id: m011
+  date: 2026-09-16 09:30
+  from: dreyes
+  to: [pnair]
+  cc: [mchen]
+  subject: "Re: Coastline - first call notes"
+  reply_to: m010
+  body: |
+    Good. Let's call it Project Falcon from now on and keep it to the three of us.
+    Mark, please prepare a valuation range before the board on the 24th.
+
+    Daniel
+
+- id: m012
+  date: 2026-09-22 18:02
+  from: mchen
+  to: [dreyes, pnair]
+  subject: Falcon - valuation range for the board
+  body: |
+    Hi both,
+
+    Base case gives an enterprise value of about USD 11.2M; upside 15.8M. I suggest we ask the board for an 11-13M range with an earn-out of up to 2M.
+    Financing: we will need a term loan of roughly 8M. I'm talking to two banks, nothing signed.
+
+    Mark
+
+- id: m013
+  date: 2026-10-01 10:15
+  from: pnair
+  to: [dreyes]
+  subject: Falcon - due diligence starts
+  body: |
+    Daniel,
+
+    Data room is open. I've shared the Falcon folder with Finance so they can upload the due-diligence material.
+    Founders want an answer on the CTO retention package by mid-November.
+
+    Priya
+
+- id: m014
+  date: 2026-10-01 11:02
+  from: dreyes
+  to: [pnair]
+  subject: "Re: Falcon - due diligence starts"
+  reply_to: m013
+  body: |
+    Fine, but only Mark should be working on it. Grace and the others don't need to know about Falcon yet.
+
+    D.
+
+- id: m015
+  date: 2026-10-14 17:25
+  from: mchen
+  to: [dreyes]
+  subject: Q3 results - preliminary
+  body: |
+    Daniel,
+
+    Q3 revenue 4.82M vs plan 4.97M; EBITDA 680k vs 690k. Westbridge slipped to November.
+    Cash 2.61M at end of September. I'll have the investor-update numbers ready Thursday.
+
+    Mark
+
+- id: m016
+  date: 2026-10-15 07:58
+  from: skim
+  to: [dreyes]
+  cc: [pnair]
+  subject: Restructuring - severance estimate
+  body: |
+    Daniel,
+
+    Rough severance estimate for the two positions in the draft plan: about USD 23,700 in total. The warehouse supervisor and marketing analyst roles are already vacant, so there are no costs there.
+    I'll prepare individual letters once the board approves on 20 November.
+
+    Sarah
+
+# ---------------- C10: restructuring draft sent to the wrong list
+- id: m020
+  date: 2026-10-14 16:12
+  from: pnair
+  to: [list:all-staff]
+  subject: Organisation 2027 - draft for discussion
+  need: [dreyes, pnair, mchen, skim]
+  case: C10
+  body: |
+    Hi team,
+
+    Attached is the current draft of the 2027 organisation plan for our Thursday discussion:
+    - Warehouse team merges into Logistics; the warehouse supervisor role will not be backfilled and one picker position is removed.
+    - First-line IT support is outsourced from 1 February 2027.
+    - The vacant marketing analyst role is closed.
+    Net change: -4 positions. Nothing is final before the board on 20 November.
+
+    Priya
+
+- id: m021
+  date: 2026-10-14 16:31
+  from: pnair
+  to: [list:all-staff]
+  subject: "Please disregard my previous email"
+  body: |
+    Hi all,
+
+    My previous email was meant for the executive team only. Please delete it and do not forward it. There are no decisions about anyone's role. I'm sorry for the confusion.
+
+    Priya
+
+- id: m022
+  date: 2026-10-14 16:50
+  from: kpark
+  to: [pnair]
+  subject: "Re: Please disregard my previous email"
+  reply_to: m021
+  body: |
+    Priya, I can't recall messages on our server once they are delivered. If you want, Nora can purge the message from mailboxes, but we'd need HR's ok because it touches every mailbox.
+
+    Kevin
+
+# ---------------- Company-wide announcements (legitimate all-staff)
+- id: m030
+  date: 2026-10-01 09:00
+  from: skim
+  to: [list:all-staff]
+  subject: Holiday schedule 2026-2027
+  body: |
+    Dear all,
+
+    The holiday schedule is now in Announcements. The office closes on 25-26 December and 1 January; Operations will share the warehouse rota by 15 November.
+
+    Sarah Kim, HR
+
+- id: m031
+  date: 2026-10-13 08:30
+  from: skim
+  to: [list:all-staff]
+  subject: Please welcome Aisha Bello
+  body: |
+    Hi everyone,
+
+    Aisha Bello joins Marketing today as our Graphic Designer. She comes from a packaging design studio and will work on campaign visuals and social content. Grace Lin is her buddy.
+    Please say hello if you see her around!
+
+    Sarah
+
+- id: m032
+  date: 2026-10-10 14:00
+  from: pnair
+  to: [list:all-staff]
+  subject: All-hands Q4 - 23 October 15:00
+  body: |
+    Hi all,
+
+    Our Q4 all-hands is on Thursday 23 October at 15:00 in the canteen (video link for the warehouse). Agenda is in Announcements.
+
+    Priya
+
+- id: m033
+  date: 2026-08-20 10:12
+  from: kpark
+  to: [list:all-staff]
+  subject: "Security alert: fake invoice emails"
+  body: |
+    Hi all,
+
+    Yesterday a fake "invoice overdue" email reached several of you. Never enter your password on a page you reached from an email. Report anything suspicious to support@meridian.test.
+    Mandatory security awareness session: 3 September, 10:00.
+
+    Kevin
+
+- id: m034
+  date: 2026-09-02 11:00
+  from: gli
+  to: [list:all-staff]
+  subject: Expense policy reminder
+  body: |
+    Hi all,
+
+    Quick reminder: expenses must be submitted within 30 days with a receipt. The policy is shared with you in Finance/Policies. Questions to ap@meridian.test.
+
+    Grace Li, Finance

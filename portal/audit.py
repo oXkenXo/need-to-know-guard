@@ -1,34 +1,31 @@
-"""Penghubung AI <-> admin: log temuan, audit izin, rekomendasi, aksi Cabut/Abaikan, dan permintaan akses.
+"""The link between the AI and the administrators: logging, permission audit, recommendations,
+Revoke / Keep actions, and access requests.
 
-Prinsip: AI hanya MENCATAT dan MENYARANKAN. Perubahan izin di Nextcloud hanya terjadi kalau admin
-menekan tombol (dan mencentang konfirmasi). Semua keputusan tercatat di data/audit.db.
+Principle: the AI only RECORDS and RECOMMENDS. Permissions change only when an administrator presses a
+button (and ticks the confirmation). Every decision is stored in data/audit.db.
 """
 import datetime as dt
 import json
+import shutil
 import sqlite3
 from collections import Counter, defaultdict
 
 import pandas as pd
 
-import konfigurasi as K
+import config as K
+from mailserver import MailError, Mailbox
 from nextcloud import Nextcloud, NextcloudError
 
 DB = K.DATA_DIR / "audit.db"
-SKEMA = """
-CREATE TABLE IF NOT EXISTS log_chat (id INTEGER PRIMARY KEY, waktu TEXT, user TEXT, fileid TEXT, judul TEXT,
-    zona TEXT, skor REAL, kunci TEXT);
-CREATE TABLE IF NOT EXISTS keputusan (kunci TEXT PRIMARY KEY, aksi TEXT, oleh TEXT, waktu TEXT, hasil TEXT);
-CREATE TABLE IF NOT EXISTS permintaan (id INTEGER PRIMARY KEY, waktu TEXT, pemohon TEXT, fileid TEXT, judul TEXT,
-    pemilik TEXT, alasan TEXT, status TEXT, diputus_oleh TEXT, waktu_putus TEXT);
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS chat_log (id INTEGER PRIMARY KEY, time TEXT, user TEXT, item TEXT, title TEXT,
+    zone TEXT, score REAL, keys TEXT);
+CREATE TABLE IF NOT EXISTS decisions (key TEXT PRIMARY KEY, action TEXT, by TEXT, time TEXT, result TEXT);
+CREATE TABLE IF NOT EXISTS requests (id INTEGER PRIMARY KEY, time TEXT, requester TEXT, item TEXT, title TEXT,
+    author TEXT, reason TEXT, status TEXT, decided_by TEXT, decided_at TEXT);
 """
-
-
-def wilson_bawah(bad, n, z=1.96):
-    """Batas bawah selang 95% dari persen akses yang ditahan. Izin dengan bukti sedikit tidak langsung naik ke atas."""
-    if n == 0:
-        return 0.0
-    p, d = bad / n, 1 + z * z / n
-    return max(0.0, (p + z * z / (2 * n) - z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5)) / d)
+SOURCE = {"share": "Files", "link": "Files", "location": "Files", "teamfolder": "Files",
+          "group": "Directory", "list": "Mail", "email": "Mail", "forward": "Mail"}
 
 
 def _now():
@@ -37,274 +34,353 @@ def _now():
 
 def db():
     con = sqlite3.connect(DB)
-    con.executescript(SKEMA)
+    con.executescript(SCHEMA)
     return con
 
 
-def nc():
+def nextcloud():
     return Nextcloud(K.NC_URL, K.NC_ADMIN_USER, K.NC_ADMIN_PASS)
 
 
-# ---------------------------------------------------------------------- log dari chatbot (audit pasif)
-def catat_chat(idx, user, hasil_nilai):
-    """Setiap dokumen yang dinilai saat chatbot menjawab dicatat (lolos / tanya / tahan) + izin penyebab aksesnya."""
-    rows = []
-    for r in hasil_nilai:
-        if r["skor"] is None:          # bukan penilaian guard (penulis, sudah disetujui, karyawan baru) -> bukan bukti
-            continue
-        a = idx["akses"].get(user, {}).get(r["fid"], {})
-        rows.append((_now(), user, r["fid"], idx["files"][r["fid"]]["judul"], r["zona"], r["skor"],
-                     json.dumps(a.get("kunci", []))))
-    with db() as con:
-        con.executemany("INSERT INTO log_chat (waktu,user,fileid,judul,zona,skor,kunci) VALUES (?,?,?,?,?,?,?)", rows)
+def wilson_lower(bad, n, z=1.96):
+    """Lower bound of the 95% interval of the share of held accesses: little evidence never ranks first."""
+    if n == 0:
+        return 0.0
+    p, d = bad / n, 1 + z * z / n
+    return max(0.0, (p + z * z / (2 * n) - z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5)) / d)
 
 
-def ringkas_log_chat(idx):
+# ---------------------------------------------------------------------- chatbot log (passive audit)
+def log_chat(idx, user, decisions):
+    """Every guard decision made while the chatbot answers, with the permission that caused the access."""
+    rows = [(_now(), user, d["id"], idx["items"][d["id"]]["title"], d["zone"], d["score"],
+             json.dumps(idx["access"].get(user, {}).get(d["id"], {}).get("keys", [])))
+            for d in decisions if d["score"] is not None]           # author / approved / new hire: not evidence
     with db() as con:
-        df = pd.read_sql("SELECT * FROM log_chat", con)
+        con.executemany("INSERT INTO chat_log (time,user,item,title,zone,score,keys) VALUES (?,?,?,?,?,?,?)", rows)
+
+
+def chat_log_summary(idx):
+    with db() as con:
+        df = pd.read_sql("SELECT * FROM chat_log", con)
+    cols = ["permission", "source", "requests", "held", "ask", "employees", "suspicion"]
     if df.empty:
-        return pd.DataFrame(columns=["izin", "akses_diminta", "ditahan", "tanya", "karyawan", "skor_curiga"])
-    st = defaultdict(Counter)
-    who = defaultdict(set)
+        return pd.DataFrame(columns=cols)
+    st, who = defaultdict(Counter), defaultdict(set)
     for _, r in df.iterrows():
-        if r["user"] in idx["files"].get(r["fileid"], {}).get("penulis", []):
-            continue
-        for k in json.loads(r["kunci"]):
-            st[k][r["zona"]] += 1
+        for k in json.loads(r["keys"]):
+            st[k][r["zone"]] += 1
             who[k].add(r["user"])
-    rows = [{"kunci": k, "izin": idx["grants"].get(k, {}).get("label", k), "akses_diminta": sum(c.values()),
-             "ditahan": c["tahan"], "tanya": c["tanya"], "karyawan": len(who[k]),
-             "skor_curiga": round(wilson_bawah(c["tahan"] + 0.5 * c["tanya"], sum(c.values())), 3)}
-            for k, c in st.items() if idx["grants"].get(k, {}).get("jenis") != "teamfolder"]
-    return pd.DataFrame(rows).sort_values(["skor_curiga", "karyawan"], ascending=False).reset_index(drop=True)
+    rows = [{"key": k, "permission": idx["grants"].get(k, {}).get("label", k),
+             "source": SOURCE.get(idx["grants"].get(k, {}).get("kind"), "?"), "requests": sum(c.values()),
+             "held": c["hold"], "ask": c["ask"], "employees": len(who[k]),
+             "suspicion": round(wilson_lower(c["hold"] + 0.5 * c["ask"], sum(c.values())), 3)}
+            for k, c in st.items() if idx["grants"].get(k, {}).get("kind") != "teamfolder"]
+    return pd.DataFrame(rows).sort_values(["suspicion", "employees"], ascending=False).reset_index(drop=True)
 
 
-# ---------------------------------------------------------------------- audit proaktif
-def rekomendasi(idx, kunci):
-    g = idx["grants"].get(kunci, {})
-    d, j = g.get("detail", {}), g.get("jenis")
-    if j == "share":
-        return (f"Hapus share '{(d.get('path') or '').strip('/')}' ke grup {d.get('ke')}; bagikan hanya ke yang perlu"
-                if d.get("share_type") == 1 else
-                f"Cabut share '{(d.get('path') or '').strip('/')}' ke {d.get('ke')}, atau beri tanggal kedaluwarsa")
-    if j == "link":
-        return f"Hapus link publik '{(d.get('path') or '').strip('/')}', atau beri password + kedaluwarsa"
-    if j == "grup":
-        return f"Keluarkan {d.get('user')} dari grup {d.get('grup')} (cek apakah masih bertugas di sana)"
-    if j == "lokasi":
-        return f"Pindahkan '{idx['files'].get(d.get('fileid'), {}).get('judul')}' dari /{d.get('folder')} ke folder yang lebih tertutup"
-    if j == "teamfolder":
-        return f"Tinjau izin grup {d.get('grup')} di Team folder /{d.get('folder')} (php occ groupfolders:group)"
-    return "Periksa manual"
+# ---------------------------------------------------------------------- proactive audit
+def recommendation(idx, key):
+    g = idx["grants"].get(key, {})
+    d, kind = g.get("detail", {}), g.get("kind")
+    path = (d.get("path") or "").strip("/")
+    if kind == "share":
+        return (f"Remove the share of '{path}' with group {d.get('to')}; share only with the people who need it"
+                if d.get("share_type") == 1 else f"Remove the share of '{path}' with {d.get('to')}, or add an expiry date")
+    if kind == "link":
+        return f"Delete the public link to '{path}', or protect it with a password and an expiry date"
+    if kind == "group":
+        return f"Remove {d.get('user')} from group {d.get('group')} (check whether they still work there)"
+    if kind == "location":
+        return f"Move '{idx['items'].get(d.get('item'), {}).get('title')}' out of /{d.get('folder')} to a restricted folder"
+    if kind == "teamfolder":
+        return f"Review group {d.get('group')} on team folder /{d.get('folder')} (php occ groupfolders:group)"
+    if kind == "email":
+        return f"Purge '{d.get('subject')}' from the mailboxes of the people who do not need it"
+    if kind == "list":
+        return f"Remove {d.get('user')} from the {d.get('list')}@ mailing list"
+    if kind == "forward":
+        return f"Remove the forwarding rule that copies {d.get('src')}@ mail to {d.get('user')}"
+    return "Review manually"
 
 
-def audit_proaktif(idx, penilai):
-    """Nilai SEMUA akses yang dibuka tiap izin (bukan hanya yang ditanyakan ke chatbot), lalu urutkan izin."""
-    st, who, contoh = defaultdict(Counter), defaultdict(set), defaultdict(list)
-    tidak_dinilai = Counter()
+def proactive_audit(idx, guard):
+    """Score EVERY access each permission opens (not only what someone asked the chatbot), then rank."""
+    st, who, examples, flagged = defaultdict(Counter), defaultdict(set), defaultdict(list), defaultdict(set)
+    not_scored = Counter()
 
-    def tambah(kunci, u, r):
-        st[kunci][r["zona"]] += 1
-        who[kunci].add(u)
-        if r["zona"] != "lolos":
-            contoh[kunci].append(f"{u}: {idx['files'][r['fid']]['judul']}")
+    def add(key, u, d):
+        st[key][d["zone"]] += 1
+        who[key].add(u)
+        if d["zone"] != "allow":
+            flagged[key].add(u)
+            examples[key].append(f"{u}: {idx['items'][d['id']]['title']}")
 
-    for u, akses in idx["akses"].items():
-        fids = [f for f in akses if u not in idx["files"][f]["penulis"]]
-        if penilai.karyawan_baru(u):                      # tanpa histori -> tidak bisa dinilai, jangan menyalahkan izinnya
-            for f in fids:
-                for k in akses[f]["kunci"]:
-                    tidak_dinilai[k] += 1
+    for u, acc in idx["access"].items():
+        ids = [i for i in acc if u not in idx["items"][i].get("authors", [])]
+        if guard.new_hire(u):                    # no history -> cannot be judged; never blame the permission
+            for i in ids:
+                for k in acc[i]["keys"]:
+                    not_scored[k] += 1
             continue
-        for r in penilai.nilai(u, fids):
-            if r["skor"] is None:          # disetujui pemilik / izin sah -> bukan penilaian guard
+        for d in guard.decide(u, ids):
+            if d["score"] is None:               # approved / confirmed by admin
                 continue
-            for k in akses[r["fid"]]["kunci"]:
-                tambah(k, u, r)
-    for k, g in idx["grants"].items():                    # link publik: terbuka untuk semua karyawan
-        if g["jenis"] != "link":
+            for k in acc[d["id"]]["keys"]:
+                add(k, u, d)
+    for k, g in idx["grants"].items():           # public links are open to every employee
+        if g["kind"] != "link":
             continue
         for u in idx["users"]:
-            if penilai.karyawan_baru(u):
+            if guard.new_hire(u):
                 continue
-            fids = [f for f in g["detail"].get("files", []) if u not in idx["files"][f]["penulis"]]
-            for r in penilai.nilai(u, fids):
-                tambah(k, u, r)
-    kep = keputusan()
+            ids = [i for i in g["detail"].get("items", []) if u not in idx["items"][i].get("authors", [])]
+            for d in guard.decide(u, ids):
+                add(k, u, d)
+    dec = decisions()
     rows = []
     for k, c in st.items():
-        n, jenis = sum(c.values()), idx["grants"].get(k, {}).get("jenis", "?")
-        if jenis == "teamfolder":          # struktur Team folder sudah terwakili oleh izin per file (lokasi) & per anggota (grup)
+        n, kind = sum(c.values()), idx["grants"].get(k, {}).get("kind", "?")
+        if kind == "teamfolder":                 # already represented per file (location) and per member (group)
             continue
-        rows.append({"kunci": k, "jenis": jenis,
-                     "izin": idx["grants"].get(k, {}).get("label", k), "akses_dinilai": n,
-                     "ditahan": c["tahan"], "tanya": c["tanya"], "lolos": c["lolos"], "karyawan": len(who[k]),
-                     "persen_ditahan": round((c["tahan"] + 0.5 * c["tanya"]) / max(n, 1), 3),
-                     "skor_curiga": round(wilson_bawah(c["tahan"] + 0.5 * c["tanya"], n), 3),
-                     "tidak_dinilai": tidak_dinilai.get(k, 0),
-                     "contoh": "; ".join(contoh[k][:3]), "rekomendasi": rekomendasi(idx, k),
-                     "status": kep.get(k, {}).get("aksi", "")})
-    ada = {r["kunci"] for r in rows}
-    for k, v in kep.items():                  # izin yang sudah diputuskan admin tetap tampil (tanpa bukti baru)
-        if k not in ada and k in idx["grants"]:
-            rows.append({"kunci": k, "jenis": idx["grants"][k]["jenis"], "izin": idx["grants"][k]["label"],
-                         "akses_dinilai": 0, "ditahan": 0, "tanya": 0, "lolos": 0, "karyawan": 0, "persen_ditahan": 0.0,
-                         "skor_curiga": 0.0, "tidak_dinilai": tidak_dinilai.get(k, 0), "contoh": "",
-                         "rekomendasi": rekomendasi(idx, k), "status": v["aksi"]})
+        rows.append({"key": k, "source": SOURCE.get(kind, "?"), "kind": kind, "scope": scope(idx, k),
+                     "permission": idx["grants"].get(k, {}).get("label", k),
+                     "accesses": n, "held": c["hold"], "ask": c["ask"], "allowed": c["allow"], "employees": len(who[k]),
+                     "held_share": round((c["hold"] + 0.5 * c["ask"]) / max(n, 1), 3),
+                     "suspicion": round(wilson_lower(c["hold"] + 0.5 * c["ask"], n), 3),
+                     "not_scored": not_scored.get(k, 0), "examples": "; ".join(examples[k][:3]),
+                     "flagged_users": ",".join(sorted(flagged[k])), "recommendation": recommendation(idx, k),
+                     "status": dec.get(k, {}).get("action", "")})
+    have = {r["key"] for r in rows}
+    for k, v in dec.items():                     # decided permissions stay visible
+        if k not in have and k in idx["grants"]:
+            g = idx["grants"][k]
+            rows.append({"key": k, "source": SOURCE.get(g["kind"], "?"), "kind": g["kind"], "scope": scope(idx, k), "permission": g["label"],
+                         "accesses": 0, "held": 0, "ask": 0, "allowed": 0, "employees": 0, "held_share": 0.0,
+                         "suspicion": 0.0, "not_scored": not_scored.get(k, 0), "examples": "", "flagged_users": "",
+                         "recommendation": recommendation(idx, k), "status": v["action"]})
     df = pd.DataFrame(rows)
     if df.empty:
         return df
-    df = df.sort_values(["skor_curiga", "karyawan", "akses_dinilai"], ascending=False).reset_index(drop=True)
-    df.insert(0, "peringkat", range(1, len(df) + 1))
+    df = df.sort_values(["suspicion", "employees", "accesses"], ascending=False).reset_index(drop=True)
+    df.insert(0, "rank", range(1, len(df) + 1))
+    df.insert(1, "rank_in_scope", df.groupby("scope").cumcount() + 1)
     return df
 
 
-def risiko_aturan(idx, penilai):
-    """Hal yang tidak butuh AI: link publik, akun tanpa histori kerja (karyawan baru ATAU mantan karyawan)."""
+def reach(idx, key):
+    """How many employees a permission reaches."""
+    g = idx["grants"].get(key, {})
+    if g.get("kind") == "link":
+        return len(idx["users"])
+    return sum(1 for acc in idx["access"].values() if any(key in a["keys"] for a in acc.values()))
+
+
+def scope(idx, key):
+    """broad = the permission reaches >= BROAD_GROUP_SHARE of all staff (announcement channels, all-staff
+    shares, public links). Need-to-know is a weak signal there: real announcements match nobody's work."""
+    return "broad" if reach(idx, key) >= K.BROAD_GROUP_SHARE * len(idx["users"]) else "narrow"
+
+
+def rule_based_risks(idx, guard):
+    """Things that need no AI: public links, accounts without history, accounts with no recent activity."""
     rows = []
     for k, g in idx["grants"].items():
-        if g["jenis"] == "link":
+        if g["kind"] == "link":
             d = g["detail"]
-            rows.append({"jenis": "link publik", "objek": d.get("path", "").strip("/"), "kunci": k,
-                         "keterangan": "bisa dibuka siapa saja yang tahu link-nya" +
-                                       ("" if d.get("kedaluwarsa") else ", tanpa tanggal kedaluwarsa")})
+            rows.append({"type": "public link", "object": (d.get("path") or "").strip("/"), "key": k,
+                         "note": "anyone with the link can open it" + ("" if d.get("expires") else "; no expiry date")})
+    seen = idx.get("last_seen", {})
+    latest = max(seen.values(), default="")
     for u, info in idx["users"].items():
-        if penilai.karyawan_baru(u):
-            rows.append({"jenis": "akun tanpa histori", "objek": f"{info['nama']} ({u})", "kunci": "",
-                         "keterangan": f"grup {', '.join(info['grup'])}; aktivitas terakhir "
-                                       f"{idx['aktivitas_terakhir'].get(u) or 'tidak ada'}. Karyawan baru -> wajar "
-                                       "(dokumen lewat persetujuan pemilik). Mantan karyawan -> nonaktifkan akun (urusan HR/IAM, "
-                                       "di luar cakupan guard)."})
-    return pd.DataFrame(rows, columns=["jenis", "objek", "kunci", "keterangan"])
+        if guard.new_hire(u):
+            rows.append({"type": "account without history", "object": f"{info['name']} ({u})", "key": "",
+                         "note": f"groups: {', '.join(info['groups'])}. New hire -> fine (documents need owner approval). "
+                                 "Former employee -> disable the account (HR/IAM, outside the guard)."})
+        elif latest and seen.get(u) and (dt.date.fromisoformat(latest) - dt.date.fromisoformat(seen[u])).days >= K.INACTIVE_DAYS:
+            days = (dt.date.fromisoformat(latest) - dt.date.fromisoformat(seen[u])).days
+            rows.append({"type": "inactive account", "object": f"{info['name']} ({u})", "key": "",
+                         "note": f"last activity {seen[u]} ({days} days before the most recent activity in the company). "
+                                 "Check with HR whether this person still works here."})
+    return pd.DataFrame(rows, columns=["type", "object", "key", "note"])
 
 
-# ---------------------------------------------------------------------- aksi admin
-def keputusan():
+# ---------------------------------------------------------------------- admin actions
+def decisions():
     with db() as con:
-        cur = con.execute("SELECT kunci, aksi, oleh, waktu, hasil FROM keputusan")
-        return {r[0]: {"aksi": r[1], "oleh": r[2], "waktu": r[3], "hasil": r[4]} for r in cur.fetchall()}
+        cur = con.execute("SELECT key, action, by, time, result FROM decisions")
+        return {r[0]: {"action": r[1], "by": r[2], "time": r[3], "result": r[4]} for r in cur.fetchall()}
 
 
-def riwayat_keputusan():
+def decision_history():
     with db() as con:
-        return pd.read_sql("SELECT waktu, oleh, aksi, kunci, hasil FROM keputusan ORDER BY waktu DESC", con)
+        return pd.read_sql("SELECT time, by, action, key, result FROM decisions ORDER BY time DESC", con)
 
 
-def _catat(kunci, aksi, oleh, hasil):
+def _record(key, action, by, result):
     with db() as con:
-        con.execute("INSERT OR REPLACE INTO keputusan VALUES (?,?,?,?,?)", (kunci, aksi, oleh, _now(), hasil))
+        con.execute("INSERT OR REPLACE INTO decisions VALUES (?,?,?,?,?)", (key, action, by, _now(), result))
 
 
-def abaikan(kunci, oleh):
-    _catat(kunci, "abaikan", oleh, "ditandai sengaja / sah")
-    return f"Izin `{kunci}` ditandai **sah**. Tidak dihapus dari Nextcloud."
+def keep(key, by):
+    _record(key, "keep", by, "confirmed as intended")
+    return f"Permission `{key}` marked as **intended**. Nothing was changed; the guard will no longer hold access through it."
 
 
-def cabut(idx, kunci, oleh, tujuan=None):
-    """Jalankan perbaikan di Nextcloud. Kembalikan pesan hasil (juga dicatat)."""
-    g = idx["grants"].get(kunci)
+def _edit_aliases(src, remove_user):
+    """Remove one recipient from a line of postfix-virtual.cf (the mail server reloads it automatically)."""
+    path = K.MAIL_ALIASES
+    if not path or not path.exists():
+        raise RuntimeError("MAIL_ALIASES is not set; edit the mail server's alias file by hand")
+    shutil.copy(path, path.with_suffix(".cf.bak"))
+    out, changed = [], False
+    for line in path.read_text(encoding="utf-8").splitlines():
+        parts = line.split(None, 1)
+        if len(parts) == 2 and not line.startswith("#") and parts[0].split("@")[0].lower() == src:
+            rcpt = [r for r in parts[1].split(",") if r.split("@")[0].lower() != remove_user]
+            changed = len(rcpt) != len(parts[1].split(","))
+            if rcpt == [parts[0]]:               # only the mailbox itself is left -> rule no longer needed
+                continue
+            line = f"{parts[0]} {','.join(rcpt)}"
+        out.append(line)
+    if not changed:
+        raise RuntimeError(f"{remove_user} not found in the {src}@ line")
+    path.write_text("\n".join(out) + "\n", encoding="utf-8")
+
+
+def _ldap_remove_member(group, user):
+    import ldap3
+    srv = ldap3.Server(K.LDAP_URL)
+    with ldap3.Connection(srv, K.LDAP_ADMIN_DN, K.LDAP_ADMIN_PASSWORD, auto_bind=True) as con:
+        con.modify(f"cn={group},ou=groups,{K.LDAP_BASE}",
+                   {"member": [(ldap3.MODIFY_DELETE, [f"uid={user},ou=people,{K.LDAP_BASE}"])]})
+        if con.result["result"] != 0:
+            raise RuntimeError(f"LDAP: {con.result['description']} {con.result.get('message', '')}")
+
+
+def revoke(idx, key, by, target=None, flagged_users=""):
+    """Apply the fix on the real servers. Returns a message (also stored)."""
+    g = idx["grants"].get(key)
     if not g:
-        return "Izin tidak ditemukan (jalankan sinkron ulang)."
-    d, j, akun, client = g["detail"], g["jenis"], K.akun_uji(), nc()
+        return "Permission not found (run Sync again)."
+    d, kind, acc, nc = g["detail"], g["kind"], K.accounts(), nextcloud()
     try:
-        if j in ("share", "link"):
-            pemilik = d.get("pemilik")
-            if pemilik in akun:
-                client.hapus_share(pemilik, akun[pemilik], d["id"])
-                hasil = f"share/link {d['id']} milik {pemilik} dihapus"
+        if kind in ("share", "link"):
+            owner = d.get("owner")
+            if owner in acc:
+                nc.delete_share(owner, acc[owner], d["id"])
+                result = f"share/link {d['id']} of {owner} deleted"
             else:
-                client.notifikasi(pemilik, "Mohon cabut share", f"Admin meminta share '{d.get('path')}' dicabut.")
-                hasil = f"password {pemilik} tidak ada -> {pemilik} diberi notifikasi untuk mencabut sendiri"
-        elif j == "grup":
-            client.keluarkan_dari_grup(d["user"], d["grup"])
-            hasil = f"{d['user']} dikeluarkan dari grup {d['grup']}"
-        elif j == "lokasi":
-            if not tujuan:
-                return "Isi dulu **folder tujuan** (mis. `/HR`) untuk memindahkan file."
-            f = idx["files"][d["fileid"]]
-            pelaku = next((u for u in f["penulis"] if u in akun), None)
-            if not pelaku:
-                return "Penulis file tidak punya password di AKUN_FILE; pindahkan manual lewat Nextcloud."
-            dst = "/" + tujuan.strip("/") + "/" + f["judul"]
-            client.pindah(pelaku, akun[pelaku], idx["akses"][pelaku][d["fileid"]]["path"], dst)
-            hasil = f"'{f['judul']}' dipindah ke {dst} (oleh akun {pelaku})"
-        elif j == "teamfolder":
-            return ("Izin Team folder diubah manual oleh admin server: "
-                    f"`php occ groupfolders:list` lalu `php occ groupfolders:group <id> {d.get('grup')} ...`")
+                nc.notify(owner, "Please remove a share", f"An administrator asks you to remove the share of '{d.get('path')}'.")
+                result = f"no password for {owner} -> {owner} was notified to remove it"
+        elif kind == "group":
+            if K.LDAP_URL:
+                _ldap_remove_member(d["group"], d["user"])
+                result = f"{d['user']} removed from directory group {d['group']}"
+            else:
+                nc.remove_from_group(d["user"], d["group"])
+                result = f"{d['user']} removed from Nextcloud group {d['group']}"
+        elif kind == "location":
+            if not target:
+                return "Fill in the **target folder** (e.g. `/Executive`) to move the file."
+            it = idx["items"][d["item"]]
+            mover = next((u for u in it.get("authors", []) if u in acc), None)
+            if not mover:
+                return "The author has no password in ACCOUNTS_FILE; move the file in Nextcloud by hand."
+            dst = "/" + target.strip("/") + "/" + it["title"]
+            nc.move(mover, acc[mover], idx["access"][mover][d["item"]]["path"], dst)
+            result = f"'{it['title']}' moved to {dst} (as {mover})"
+        elif kind == "email":
+            # purge from the usernames typed by the admin, otherwise from the mailboxes the guard flagged
+            users = [u.strip() for u in (target or flagged_users).split(",") if u.strip()]
+            if not users:
+                return ("The guard flagged no mailbox for this email. Type the usernames to purge it from in the "
+                        "target field (e.g. `glin`).")
+            unknown = [u for u in users if u not in acc]
+            if unknown:
+                return f"No password for {', '.join(unknown)} in ACCOUNTS_FILE; purge with doveadm on the mail server."
+            mb = Mailbox(K.IMAP_HOST, K.IMAP_PORT, K.IMAP_CAFILE)
+            n = sum(mb.delete(f"{u}@{K.MAIL_DOMAIN}", acc[u], d["message_id"]) for u in users if u in acc)
+            result = f"'{d.get('subject')}' purged from {n} mailbox(es): {', '.join(users)}"
+        elif kind == "list":
+            _edit_aliases(d["list"], d["user"])
+            result = f"{d['user']} removed from the {d['list']}@ list (alias file updated)"
+        elif kind == "forward":
+            _edit_aliases(d["src"], d["user"])
+            result = f"forwarding of {d['src']}@ to {d['user']} removed (alias file updated)"
+        elif kind == "teamfolder":
+            return ("Team folder permissions are changed by the server admin: "
+                    f"`php occ groupfolders:list`, then `php occ groupfolders:group <id> {d.get('group')} ...`")
         else:
-            return "Jenis izin ini tidak bisa dicabut otomatis."
-    except NextcloudError as e:
-        _catat(kunci, "gagal", oleh, str(e))
-        return f"Gagal: {e}"
-    _catat(kunci, "cabut", oleh, hasil)
-    if K.KIRIM_NOTIFIKASI:
+            return "This kind of permission cannot be revoked automatically."
+    except (NextcloudError, MailError, RuntimeError, OSError) as e:
+        _record(key, "failed", by, str(e))
+        return f"Failed: {e}"
+    _record(key, "revoke", by, result)
+    if K.NOTIFY:
         try:
-            client.notifikasi(K.NC_ADMIN_USER, "Izin dicabut lewat portal", f"{kunci}: {hasil}")
+            nc.notify(K.NC_ADMIN_USER, "Permission revoked in the portal", f"{key}: {result}")
         except NextcloudError:
             pass
-    return f"Berhasil: {hasil}. Jalankan **Sinkron** supaya portal membaca izin terbaru."
+    return f"Done: {result}. Press **Sync** so the portal reads the new permissions."
 
 
-def kirim_ringkasan_ke_admin(tabel, n=5):
-    """Notifikasi lonceng Nextcloud ke admin: n izin paling mencurigakan."""
-    top = tabel[(tabel["skor_curiga"] > 0) & (tabel["status"] == "")].head(n)
+def notify_admin(table, n=5):
+    top = table[(table["suspicion"] > 0) & (table["status"] == "")].head(n)
     if top.empty:
-        return "Tidak ada izin mencurigakan yang perlu dikirim."
-    isi = "\n".join(f"{r.peringkat}. {r.izin} (skor {r.skor_curiga})" for r in top.itertuples())
-    nc().notifikasi(K.NC_ADMIN_USER, f"Guard: {len(top)} izin perlu ditinjau", isi)
-    return f"Notifikasi terkirim ke {K.NC_ADMIN_USER}."
+        return "Nothing suspicious to send."
+    text = "\n".join(f"{r.rank}. {r.permission} (suspicion {r.suspicion})" for r in top.itertuples())
+    nextcloud().notify(K.NC_ADMIN_USER, f"Guard: {len(top)} permissions to review", text)
+    return f"Notification sent to {K.NC_ADMIN_USER}."
 
 
-# ---------------------------------------------------------------------- permintaan akses (zona tanya)
-def minta_akses(idx, pemohon, fid, alasan=""):
-    f = idx["files"][fid]
-    pemilik = f["penulis"][0] if f["penulis"] else None
-    if not pemilik:
-        return "Dokumen ini tidak punya penulis yang tercatat; hubungi admin."
+# ---------------------------------------------------------------------- access requests (ask zone)
+def request_access(idx, requester, item, reason=""):
+    it = idx["items"][item]
+    author = it.get("authors", [None])[0] if it.get("authors") else None
+    if not author:
+        return "This item has no recorded author; contact an administrator."
     with db() as con:
-        ada = con.execute("SELECT status FROM permintaan WHERE pemohon=? AND fileid=? AND status='menunggu'",
-                          (pemohon, fid)).fetchone()
-        if ada:
-            return "Permintaan untuk dokumen ini masih menunggu."
-        con.execute("INSERT INTO permintaan (waktu,pemohon,fileid,judul,pemilik,alasan,status) VALUES (?,?,?,?,?,?,?)",
-                    (_now(), pemohon, fid, f["judul"], pemilik, alasan, "menunggu"))
-    if K.KIRIM_NOTIFIKASI:
+        if con.execute("SELECT 1 FROM requests WHERE requester=? AND item=? AND status='pending'", (requester, item)).fetchone():
+            return "A request for this item is already pending."
+        con.execute("INSERT INTO requests (time,requester,item,title,author,reason,status) VALUES (?,?,?,?,?,?,?)",
+                    (_now(), requester, item, it["title"], author, reason, "pending"))
+    if K.NOTIFY:
         try:
-            nc().notifikasi(pemilik, f"{pemohon} minta akses ke '{f['judul']}'", alasan or "(tanpa alasan)")
+            nextcloud().notify(author, f"{requester} asks for access to '{it['title']}'", reason or "(no reason given)")
         except NextcloudError:
             pass
-    return f"Permintaan dikirim ke **{pemilik}** (penulis dokumen)."
+    return f"Request sent to **{author}** (the author)."
 
 
-def daftar_permintaan(pemilik=None, pemohon=None):
-    q, p = "SELECT id, waktu, pemohon, judul, pemilik, alasan, status FROM permintaan", []
-    if pemilik:
-        q, p = q + " WHERE pemilik=?", [pemilik]
-    elif pemohon:
-        q, p = q + " WHERE pemohon=?", [pemohon]
+def list_requests(author=None, requester=None):
+    q, p = "SELECT id, time, requester, title, author, reason, status FROM requests", []
+    if author:
+        q, p = q + " WHERE author=?", [author]
+    elif requester:
+        q, p = q + " WHERE requester=?", [requester]
     with db() as con:
         return pd.read_sql(q + " ORDER BY id DESC", con, params=p)
 
 
-def putuskan(pid, oleh, setuju):
+def decide_request(rid, by, approve):
     with db() as con:
-        r = con.execute("SELECT pemilik, status FROM permintaan WHERE id=?", (pid,)).fetchone()
+        r = con.execute("SELECT author, status FROM requests WHERE id=?", (rid,)).fetchone()
         if not r:
-            return "Permintaan tidak ditemukan."
-        if r[0] != oleh:
-            return "Hanya penulis dokumen yang bisa memutuskan."
-        if r[1] != "menunggu":
-            return f"Permintaan sudah {r[1]}."
-        con.execute("UPDATE permintaan SET status=?, diputus_oleh=?, waktu_putus=? WHERE id=?",
-                    ("disetujui" if setuju else "ditolak", oleh, _now(), pid))
-    return "Disetujui: dokumen bisa dipakai chatbot untuk pemohon." if setuju else "Ditolak."
+            return "Request not found."
+        if r[0] != by:
+            return "Only the author can decide."
+        if r[1] != "pending":
+            return f"Request already {r[1]}."
+        con.execute("UPDATE requests SET status=?, decided_by=?, decided_at=? WHERE id=?",
+                    ("approved" if approve else "rejected", by, _now(), rid))
+    return "Approved: the chatbot may now use this item for the requester." if approve else "Rejected."
 
 
-def izin_sah():
-    """Izin yang ditandai 'abaikan' (sah) oleh admin -> dipakai guard sebagai pengecualian."""
-    return {k for k, v in keputusan().items() if v["aksi"] == "abaikan"}
-
-
-def persetujuan():
+def approvals():
     with db() as con:
-        return [tuple(r) for r in con.execute("SELECT pemohon, fileid FROM permintaan WHERE status='disetujui'")]
+        return [tuple(r) for r in con.execute("SELECT requester, item FROM requests WHERE status='approved'")]
+
+
+def legit_keys():
+    return {k for k, v in decisions().items() if v["action"] == "keep"}

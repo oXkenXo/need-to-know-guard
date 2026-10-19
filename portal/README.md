@@ -1,121 +1,101 @@
-# Portal Karyawan · Need-to-Know Guard
+# Portal — document assistant with the Need-to-Know Guard
 
-Portal web untuk storage server uji (Nextcloud). Karyawan bisa melihat **dokumen apa saja yang bisa ia buka** dan bertanya ke **chatbot**. Admin punya **panel auditor** yang menunjuk izin mana yang salah.
+A web portal for employees and administrators, connected to the file server (Nextcloud) and the mail server (IMAP) of the [Meridian Labs test environment](../lab/README.md).
+
+| Tab | Who | What |
+|---|---|---|
+| **My items** | employee | every file and email you can open on the servers, *why* you can open it (team folder, share, mailing list, forwarding rule…), and whether the assistant may use it for you |
+| **Assistant** | employee | a chatbot that answers from your files and email, with two layers of protection (below) |
+| **Access requests** | employee | items the guard was unsure about can be requested from their author; authors approve or reject |
+| **Admin** | administrator | proactive audit of every permission, Revoke / Keep buttons, rule-based risks, evaluation against the lab's answer key |
 
 ```
-Karyawan ──login──▶ Portal (Gradio) ──WebDAV/OCS──▶ Nextcloud
-                       │
-   pertanyaan ──▶ ① ACL Nextcloud (file yang memang bisa dibuka)
-                  ② Guard 3 zona: lolos / tanya pemilik / tahan
-                  ③ LLM menjawab HANYA dari dokumen yang lolos
-                       │
-                       └─ setiap "ACL boleh, guard ragu/tahan" dicatat ─▶ Panel admin
-                                                                          │
-                       Admin klik Cabut / Abaikan ◀─ izin diurutkan ◀─────┘
-                       (hapus share, keluarkan dari grup, pindahkan file)
+question ──▶ ① ACL from the servers: only items the user can actually open (WebDAV listing, own mailbox)
+             ② Need-to-Know Guard, three zones per item:
+                   allow ─▶ given to the LLM
+                   ask   ─▶ not used; the user can request it from the author
+                   hold  ─▶ not used
+             ③ LLM answers only from the allowed items
+                   │
+                   └── every "ACL allows, guard holds" is logged with the permission that caused it ──▶ Admin
 ```
 
-**Prinsip:** AI hanya mencatat dan menyarankan. Izin di Nextcloud berubah **hanya** kalau admin menekan tombol dan mencentang "Saya yakin". Semua keputusan tercatat.
+## How the AI is connected to the administrators
 
-## Isi folder
+1. **Every access has a cause.** The connector records why each person can open each item: a share, a public link, group membership, the file's location in an open team folder, an email sent to them, a mailing list, or a forwarding rule.
+2. **Proactive audit** (*Run the audit*). The guard scores *every* access each permission opens and ranks the permissions. `suspicion` is the lower bound of the 95% interval of the share of held accesses, so permissions with little evidence do not jump to the top. Each permission is either **narrow** (reaches few people) or **broad** (reaches ≥ 80% of staff: all-staff shares, announcement folders, all-staff emails, public links).
+3. **The administrator decides.** The AI never changes anything by itself.
 
-| File | Fungsi |
-|---|---|
-| `sinkron.py` | Konektor: membaca Nextcloud sebagai tiap karyawan → file, ACL efektif, **jalur akses** (izin penyebab), histori kerja (dari app Activity) |
-| `penilai.py` | Guard + pencarian dokumen. Keputusan 3 zona |
-| `chatbot.py` | RAG: ACL → guard → LLM |
-| `audit.py` | Log temuan, audit proaktif, rekomendasi, aksi Cabut/Abaikan, permintaan akses ke pemilik |
-| `evaluasi.py` | Precision@5 terhadap kasus K1–K5 (khusus storage uji) |
-| `app.py` | Tampilan web |
-| `nextcloud.py` | Klien WebDAV / OCS / Team folders / Activity / Notifications |
-| `uji/` | Nextcloud **tiruan** + uji otomatis (tanpa Docker) |
+   | Permission | *Revoke / fix* does |
+   |---|---|
+   | share, public link | deletes it through the Nextcloud sharing API, as the share owner |
+   | group membership | removes the member from the **LDAP** group |
+   | file in an open folder | moves the file (type the target folder, e.g. `/Executive`) |
+   | email | purges it from the flagged mailboxes over IMAP (or type usernames, e.g. `glin`) |
+   | mailing list, forwarding rule | edits the mail server's alias file; docker-mailserver reloads it automatically |
 
-## Menjalankan
+   *Keep* marks a permission as intended. It stays as it is, and the guard no longer holds access through it (feedback from a human).
+4. **Rule-based risks** need no AI: public links, accounts without any work history (new hire *or* a former employee), and accounts with no activity for `INACTIVE_DAYS`.
+5. **Passive audit**: the same signal collected from real assistant questions.
 
-Prasyarat: storage server uji sudah jalan (Langkah 1–4 di repo storage), Python 3.10+.
+## Run
+
+The lab must be running (`../lab/setup.sh all`).
 
 ```bash
 cd portal
 pip install -r requirements.txt
-cp portal.env.example portal.env      # isi NC_ADMIN_PASS = ADMIN_PASSWORD di .env storage
-python sinkron.py                     # baca Nextcloud -> data/index.json
-python app.py                         # buka http://127.0.0.1:7860
+cp portal.env.example portal.env     # set NC_ADMIN_PASS and LDAP_ADMIN_PASSWORD from lab/.env
+python connector.py                  # reads files + mail -> data/index.json (1-2 minutes)
+python app.py                        # http://127.0.0.1:7860
 ```
 
-Login dengan akun Nextcloud:
-- **Karyawan** (mis. `maya` / password di `seed/accounts.env`) → tab *Dokumen saya*, *Chatbot*, *Permintaan akses*.
-- **admin** (password = `ADMIN_PASSWORD`) → tab *Panel admin*.
+Sign in as an employee (e.g. `glin` with the password from `lab/seed/accounts.env`) or as `admin`. In the Admin tab press **1 · Sync**, then **2 · Run the audit**. Run the evaluation from the command line with `python evaluation.py`.
 
-Password hanya dipakai untuk mengecek login ke Nextcloud, tidak disimpan.
+## Guard options (`SCORER`)
 
-## Cara AI terhubung ke admin
-
-1. **Catat.** Setiap dokumen yang lolos ACL tapi dinilai guard *tanya* atau *tahan* dicatat bersama **jalur aksesnya**: share, link publik, keanggotaan grup, atau lokasi file di Team folder.
-2. **Audit proaktif** (tombol *Audit sekarang*). Guard menilai **semua** akses yang dibuka tiap izin, bukan hanya yang kebetulan ditanyakan. Izin diurutkan dengan `skor_curiga` = batas bawah selang 95% dari persen akses yang ditahan. Izin dengan bukti sedikit tidak langsung naik ke atas.
-3. **Kirim ke admin.** Hasilnya muncul di panel admin. Tombol *Kirim 5 teratas* juga mengirimnya ke lonceng notifikasi Nextcloud admin.
-4. **Admin memutuskan.**
-
-   | Jenis izin | Tombol *Cabut / perbaiki* menjalankan |
-   |---|---|
-   | share ke user/grup, link publik | `DELETE /ocs/v2.php/apps/files_sharing/api/v1/shares/{id}` sebagai pemilik share |
-   | keanggotaan grup | `DELETE /ocs/v2.php/cloud/users/{user}/groups` (akun admin) |
-   | file salah taruh | WebDAV `MOVE` ke folder tujuan yang diisi admin |
-
-   *Abaikan* menandai izin itu **sah**: tidak dihapus, dan guard tidak lagi menahan akses lewat izin itu (umpan balik dari manusia).
-5. **Karyawan juga ikut.** Dokumen di zona *tanya* bisa diminta ke penulisnya (tab *Chatbot* → *Minta akses*). Penulis menyetujui atau menolak di tab *Permintaan akses*.
-
-Hal yang tidak butuh AI ditampilkan terpisah di *Risiko berbasis aturan*: link publik, dan akun tanpa histori kerja (karyawan baru **atau** mantan karyawan; menonaktifkan akun adalah urusan HR/IAM, di luar cakupan guard).
-
-## Pilihan guard (`PENILAI`)
-
-| Pilihan | Cara kerja | Catatan |
+| Option | How it works | Notes |
 |---|---|---|
-| `tfidf` (bawaan) | kemiripan kata dokumen ↔ histori kerja (ala Carvalho) | offline, langsung jalan |
-| `embedding` | kemiripan makna, model multibahasa | butuh `sentence-transformers` (unduh model ±470 MB sekali) |
-| `deberta` | guard v5 dari notebook (`GUARD_DIR` = folder `v5_seed42/guard`) | **dilatih dengan email berbahasa Inggris**. Untuk dokumen Indonesia hasilnya tidak bisa dipercaya |
+| `tfidf` (default) | word overlap between the item and the person's own work (Carvalho-style) | offline; thresholds calibrated without labels from each person's own work |
+| `embedding` | meaning similarity (sentence-transformers) | downloads a small model once |
+| `deberta` | the **v5 guard** from the notebook (`GUARD_DIR` = `.../v5_seed42/guard`) | trained on English email, so it suits this English lab; a GPU helps but is not required for 19 users |
 
-Histori kerja = file yang dibuat/diubah karyawan itu (app **Activity** Nextcloud). Karyawan tanpa histori (mis. `rina`) tidak bisa dinilai: semua dokumennya lewat persetujuan pemilik (`MODE_KARYAWAN_BARU=tanya`).
+Work history = files a person created or edited (Nextcloud activity log) + emails they sent.
 
-## LLM untuk chatbot
+## Assistant LLM (`LLM`)
 
-Bawaan `LLM=tanpa`: chatbot menampilkan kutipan paling relevan. Untuk jawaban sungguhan di laptop (RTX 4060 8 GB):
+`none` shows the most relevant quotes. For real answers on a laptop (e.g. RTX 4060 8 GB), install [Ollama](https://ollama.com), run `ollama pull qwen2.5:7b`, and set `LLM=ollama`. The LLM only ever receives allowed items: leakage is prevented before the LLM.
 
-```bash
-# pasang Ollama dari https://ollama.com lalu:
-ollama pull qwen2.5:7b
-```
+## Results on the lab (TF-IDF scorer, before any fix)
 
-Lalu di `portal.env`: `LLM=ollama`. LLM hanya menerima dokumen yang **lolos**. Kebocoran sudah dicegah sebelum LLM.
+| | Result |
+|---|---|
+| Guard AUC on 532 scored accesses | 0.61 |
+| Narrow permissions: top 2 | C11 (CEO mail forwarded to the sysadmin) and C08 (Falcon shared with all of Finance) — both planted cases |
+| Broad permissions | announcements and policies outrank C01/C03/C10: real announcements match nobody's work, so the need-to-know signal cannot separate them from leaks |
+| Rule-based | C06 (new hire) and C07 (former employee) flagged; one false alarm (an employee with no activity for 24 days) |
+| Not found | C09 and C12: the recipients *replied* in the thread, so the email now looks like their own work |
 
-## Uji tanpa Docker (Nextcloud tiruan)
+These numbers are low because each lab employee has only 5–15 items of history, which is the cold-start situation from the notebook (AUC ≈ 0.65 with 5–20 history items). Try `SCORER=deberta` with the v5 guard. The main paper numbers come from the notebooks, not from this lab.
 
-```bash
-cp -r storage portal/uji/storage     # dari root repo ini (butuh seed/ dan seed_files.py)
-cd portal/uji
-./jalankan_uji.sh                    # server tiruan di port 8080 + seed_files.py asli + 16 pengecekan
-```
+All admin actions were tested end-to-end (`tests/test_flow.py`): deleting a share and a link, moving a file, purging emails, editing a mailing list and a forwarding rule, and removing an LDAP group member. Each change is visible after the next sync.
 
-Server tiruan meniru WebDAV, OCS (user, grup, share), Team folders, Activity, dan Notifications. Ini **bukan** Nextcloud asli. Uji terakhir tetap harus di server Docker.
+## Files
 
-## Hasil uji di Nextcloud tiruan (23 dokumen, `PENILAI=tfidf`)
+| File | Role |
+|---|---|
+| `connector.py` | reads Nextcloud (WebDAV/OCS) and IMAP as each employee → items, ACL, access causes, history |
+| `guard.py` | scorers, three-zone decision, label-free threshold calibration, search |
+| `chatbot.py` | retrieval → guard → LLM |
+| `audit.py` | logging, proactive audit, recommendations, Revoke/Keep, access requests |
+| `evaluation.py` | AUC and case ranks against `lab/seed/answer_key` |
+| `nextcloud.py`, `mailserver.py` | small clients for Nextcloud and IMAP |
+| `app.py` | the web interface (Gradio) |
+| `tests/test_flow.py` | end-to-end test of every flow and admin action |
 
-| Kasus | Izin | Peringkat | Masuk 5 teratas? |
-|---|---|---|---|
-| K1 | share `HR/Gaji 2026` ke grup Semua | 4 | ya |
-| K2 | link publik `Evaluasi Kinerja Q3` | 5 | ya (juga di daftar aturan) |
-| K3 | `Rencana PHK 2026` di /Pengumuman | 2 | ya |
-| K4 | andi masih di grup Marketing | 10 | tidak |
-| K5 | share `Kampanye Q4` ke dodi | 9 | tidak |
+## Security notes
 
-**Precision@5 = 0,60.** K4 dan K5 adalah kasus **akses basi**. Histori lama andi (Marketing) dan catatan proyek dodi memang mirip dengan dokumennya, jadi guard meloloskan. Ini **sama** dengan temuan skenario C di paper; mitigasinya profil berbasis waktu. Peringkat 1 (`Libur Akhir Tahun` di /Pengumuman) adalah **alarm palsu**: pengumuman tidak mirip kerjaan siapa pun. Admin menekan *Abaikan*.
-
-Angka ini **hanya ilustrasi**: 23 dokumen, dan ambang bawaan `tfidf` (0,06 / 0,12) dipilih setelah melihat skor di dokumen yang sama. Angka utama paper tetap dari notebook.
-
-Semua aksi (cabut K1, K2, K4; pindah K3 ke /HR; abaikan Libur) sudah diuji berubah di server tiruan setelah sinkron ulang.
-
-## Keamanan
-
-- `portal.env` dan `seed/accounts.env` berisi password. Jangan di-commit (sudah ada `.gitignore`).
-- Portal hanya mendengarkan `127.0.0.1`. Jangan dibuka ke internet.
-- `AKUN_FILE` (password semua karyawan) hanya wajar untuk **server uji**. Di perusahaan nyata konektor memakai *app password* / OAuth per karyawan.
-- Fungsi admin mengecek sesi di server, bukan hanya menyembunyikan tombol.
+- `portal.env` and `lab/seed/accounts.env` contain passwords and are git-ignored.
+- The portal listens on `127.0.0.1` only.
+- Reading every mailbox with employee passwords (`ACCOUNTS_FILE`) is only acceptable in a test lab. A real deployment would use per-user OAuth / app passwords, or a mail-archive service account.
+- Admin functions check the session on the server side, not just by hiding buttons.

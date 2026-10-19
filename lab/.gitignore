@@ -1,0 +1,11 @@
+# secrets
+.env
+seed/accounts.env
+certs/
+# generated at setup time
+build/
+config/mail/postfix-accounts.cf
+config/mail/dovecot-quotas.cf
+config/mail/*.lock
+__pycache__/
+*.pyc

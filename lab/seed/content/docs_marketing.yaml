@@ -1,0 +1,138 @@
+- path: Marketing/Q4 Campaign/Q4 Campaign Plan - Move Smarter.docx
+  owner: jrossi
+  date: 2026-08-20
+  need: ["@marketing", enovak]
+  case: C05
+  body: |
+    # Q4 Campaign — "Move Smarter"
+    Goal: 600 qualified leads from mid-size wholesale customers by 31 December.
+    ## Channels
+    - Search and paid social (60% of budget)
+    - Launch event at the City warehouse on 8 October (logistics: Emma Novak, Operations)
+    - Newsletter series (3 issues)
+    ## Owners
+    Julia Rossi (lead), Ben Carter (paid media), Grace Lin (content), Alex Turner (dashboards, until 30 Sep).
+
+- path: Marketing/Q4 Campaign/Launch Event - Run Sheet.docx
+  owner: bcarter
+  date: 2026-10-06
+  need: ["@marketing", enovak, cmendes]
+  case: C05
+  body: |
+    # Launch Event — Run Sheet (8 October)
+    - 07:30 Warehouse bay 3 cleared (Emma)
+    - 09:00 Stage, screens and catering set up
+    - 10:00 Doors open — 140 guests registered
+    - 11:30 Live demo: real-time tracking
+    - 13:00 Close; warehouse back to normal operations by 15:00
+
+- path: Marketing/Q4 Campaign/Agency Rate Card - Brightline 2027.xlsx
+  owner: jrossi
+  date: 2026-10-15
+  need: [jrossi, mchen]
+  case: C05
+  sheet:
+    columns: [Service, 2026 rate (USD), 2027 proposal (USD), Our counter-offer (USD)]
+    rows:
+      - [Monthly retainer, 18000, 19500, 12500]
+      - [Campaign creative (per campaign), 24000, 26000, 20000]
+      - [Media buying fee, 12%, 12%, 9%]
+
+- path: Marketing/Q4 Campaign/Q1 2027 Media Plan - draft.xlsx
+  owner: bcarter
+  date: 2026-10-16
+  need: ["@marketing"]
+  case: C05
+  sheet:
+    columns: [Week, Channel, Budget (USD), Goal]
+    rows:
+      - [2027-W02, Search, 9000, "Lead gen"]
+      - [2027-W03, Paid social, 7000, "Awareness"]
+      - [2027-W05, Newsletter, 500, "Nurture"]
+      - [2027-W06, Search, 9000, "Lead gen"]
+
+- path: Marketing/Competitor Research - Q3 2026.docx
+  owner: glin
+  date: 2026-09-18
+  need: ["@marketing"]
+  body: |
+    # Competitor Research — Q3 2026
+    ## SwiftHaul
+    Cut prices by ~8% on city routes in August; no tracking app yet.
+    ## Parcelnet
+    Launched next-day regional delivery; heavy spend on search ads around "same-day delivery".
+    ## Takeaways
+    Our real-time tracking demo is our strongest message. Avoid price competition on city routes.
+
+- path: Marketing/Brand/Brand Guidelines v4.docx
+  owner: jrossi
+  date: 2026-04-02
+  need: ["@marketing"]
+  body: |
+    # Brand Guidelines v4
+    - Primary colour: Meridian Teal (#0F766E); accent: Signal Orange (#F97316)
+    - Typeface: Inter for all digital; minimum body size 14 px
+    - Logo clear space: height of the "M"
+    - Tone of voice: practical, confident, never hype
+
+- path: Marketing/Social Media Calendar - Nov 2026.xlsx
+  owner: glin
+  date: 2026-10-17
+  need: ["@marketing"]
+  sheet:
+    columns: [Date, Channel, Topic, Owner, Status]
+    rows:
+      - [2026-11-03, LinkedIn, "Case study: on-time delivery 97%", Grace Lin, Draft]
+      - [2026-11-06, Instagram, "Behind the scenes: warehouse", Aisha Bello, To design]
+      - [2026-11-12, LinkedIn, "Tracking app tips", Ben Carter, Planned]
+      - [2026-11-20, Newsletter, "Q4 offer reminder", Grace Lin, Planned]
+
+- path: Marketing/Reports/Launch Event Report.docx
+  owner: bcarter
+  date: 2026-10-12
+  need: ["@marketing", pnair]
+  body: |
+    # Launch Event Report — 8 October
+    140 registered, 118 attended. 61 qualified leads captured (target 50). Cost USD 39,400 vs budget 36,000 (catering and extra screens).
+    Feedback: demo was the highlight; parking was a problem.
+
+- path: Marketing/Press Kit/Meridian Labs - Company Fact Sheet.docx
+  owner: jrossi
+  date: 2026-05-12
+  need: ["@all"]
+  body: |
+    # Meridian Labs — Fact Sheet
+    Founded 2019. Regional last-mile logistics with real-time tracking. 3 warehouses, 140 vehicles through partner fleets, 18 office staff.
+    Press contact: marketing@meridian.test
+
+# ---------- personal
+- path: Drafts/Brightline renegotiation - talking points.md
+  owner: jrossi
+  date: 2026-10-15
+  need: [jrossi]
+  body: |
+    # Brightline renegotiation
+    - Mark's target: retainer down to 12.5k/month or we tender.
+    - Leverage: Q3 creative delivered late twice.
+    - Keep media buying in-house from Q2 2027 (Ben + new analyst? analyst role frozen).
+
+- path: Drafts/Newsletter 3 - draft.md
+  owner: glin
+  date: 2026-10-14
+  need: [glin]
+  body: |
+    # Newsletter #3 — "Move Smarter" (draft)
+    Headline: Know where every parcel is, every minute.
+    - Customer quote from Westbridge (approval pending)
+    - Tip: share live tracking links with your customers
+    - CTA: book a 20-minute demo
+
+- path: Drafts/Paid social retro - Q3.md
+  owner: bcarter
+  date: 2026-10-02
+  need: [bcarter]
+  body: |
+    # Paid social retro — Q3
+    - Late launch (2 weeks) because creative approvals took longer.
+    - Broken UTM links in September newsletter → lost attribution for ~300 clicks.
+    - Fix: tracking checklist before every send.

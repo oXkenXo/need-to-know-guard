@@ -1,0 +1,144 @@
+# Meridian Labs — enterprise test environment
+#   ldap        OpenLDAP: one directory for all accounts and groups (like Active Directory)
+#   ldapadmin   phpLDAPadmin: web UI for the directory               http://localhost:8082
+#   db          PostgreSQL for Nextcloud
+#   nextcloud   File server (team folders, shares); users come from LDAP  http://localhost:8080
+#   mail        docker-mailserver (Postfix + Dovecot): SMTP submission 587, IMAPS 993
+#   webmail     Roundcube                                             http://localhost:8081
+# All ports are bound to 127.0.0.1 only: nothing is reachable from other machines.
+
+name: meridian-lab
+
+services:
+  ldap:
+    image: osixia/openldap:1.5.0
+    container_name: meridian-ldap
+    hostname: ldap.meridian.test
+    restart: unless-stopped
+    environment:
+      LDAP_ORGANISATION: Meridian Labs
+      LDAP_DOMAIN: meridian.test
+      LDAP_ADMIN_PASSWORD: ${LDAP_ADMIN_PASSWORD}
+      LDAP_READONLY_USER: "true"                     # cn=readonly,dc=meridian,dc=test (used by Nextcloud)
+      LDAP_READONLY_USER_PASSWORD: ${LDAP_READONLY_PASSWORD}
+      LDAP_TLS: "false"
+    volumes:
+      - ldap-data:/var/lib/ldap
+      - ldap-config:/etc/ldap/slapd.d
+      - ./build:/seed:ro
+    ports:
+      - "127.0.0.1:389:389"
+    networks: [corp]
+
+  ldapadmin:
+    image: osixia/phpldapadmin:0.9.0
+    container_name: meridian-ldapadmin
+    restart: unless-stopped
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: ldap
+      PHPLDAPADMIN_HTTPS: "false"
+    depends_on: [ldap]
+    ports:
+      - "127.0.0.1:8082:80"
+    networks: [corp]
+
+  db:
+    image: postgres:16-alpine
+    container_name: meridian-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks: [corp]
+
+  nextcloud:
+    image: nextcloud:34-apache
+    container_name: meridian-nextcloud
+    hostname: files.meridian.test
+    restart: unless-stopped
+    depends_on: [db, ldap]
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      NEXTCLOUD_ADMIN_USER: admin
+      NEXTCLOUD_ADMIN_PASSWORD: ${NC_ADMIN_PASSWORD}
+      NEXTCLOUD_TRUSTED_DOMAINS: localhost 127.0.0.1 files.meridian.test
+    volumes:
+      - nextcloud-data:/var/www/html
+    ports:
+      - "127.0.0.1:8080:80"
+    networks: [corp]
+
+  mail:
+    image: ghcr.io/docker-mailserver/docker-mailserver:14.0.0
+    container_name: meridian-mail
+    hostname: mail.meridian.test
+    restart: unless-stopped
+    environment:
+      OVERRIDE_HOSTNAME: mail.meridian.test
+      ONE_DIR: "1"
+      PERMIT_DOCKER: none
+      SPOOF_PROTECTION: "1"                          # you can only send as yourself
+      SSL_TYPE: manual
+      SSL_CERT_PATH: /tmp/dms/custom-certs/mail.crt
+      SSL_KEY_PATH: /tmp/dms/custom-certs/mail.key
+      # keep RAM low: no antivirus / anti-spam in the lab
+      ENABLE_CLAMAV: "0"
+      ENABLE_SPAMASSASSIN: "0"
+      ENABLE_AMAVIS: "0"
+      ENABLE_RSPAMD: "0"
+      ENABLE_FAIL2BAN: "0"
+      ENABLE_POSTGREY: "0"
+      ENABLE_OPENDKIM: "0"
+      ENABLE_OPENDMARC: "0"
+      ENABLE_POLICYD_SPF: "0"
+      POSTFIX_MESSAGE_SIZE_LIMIT: "26214400"
+    volumes:
+      - mail-data:/var/mail
+      - mail-state:/var/mail-state
+      - ./config/mail:/tmp/docker-mailserver        # postfix-virtual.cf (lists + forwarding rules)
+      - ./certs:/tmp/dms/custom-certs:ro
+    ports:
+      - "127.0.0.1:587:587"                         # SMTP submission (STARTTLS + login)
+      - "127.0.0.1:993:993"                         # IMAPS
+    networks:
+      corp:
+        aliases: [mail.meridian.test]
+
+  webmail:
+    image: roundcube/roundcubemail:1.6.9-apache
+    container_name: meridian-webmail
+    restart: unless-stopped
+    depends_on: [mail]
+    environment:
+      ROUNDCUBEMAIL_DEFAULT_HOST: ssl://mail.meridian.test
+      ROUNDCUBEMAIL_DEFAULT_PORT: "993"
+      ROUNDCUBEMAIL_SMTP_SERVER: tls://mail.meridian.test
+      ROUNDCUBEMAIL_SMTP_PORT: "587"
+      ROUNDCUBEMAIL_DB_TYPE: sqlite
+      ROUNDCUBEMAIL_SKIN: elastic
+    volumes:
+      - ./config/roundcube:/var/roundcube/config:ro
+      - ./certs/ca.crt:/etc/meridian/ca.crt:ro
+      - webmail-db:/var/roundcube/db
+    ports:
+      - "127.0.0.1:8081:80"
+    networks: [corp]
+
+networks:
+  corp:
+    name: meridian-corp
+
+volumes:
+  ldap-data:
+  ldap-config:
+  db-data:
+  nextcloud-data:
+  mail-data:
+  mail-state:
+  webmail-db:

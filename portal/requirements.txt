@@ -3,8 +3,12 @@ requests
 pandas
 numpy
 scikit-learn
-# opsional:
-# sentence-transformers      # PENILAI=embedding / deberta
-# torch transformers         # PENILAI=deberta atau LLM=transformers
-# bitsandbytes accelerate    # LLM=transformers dengan GPU (4-bit)
-# python-docx pypdf          # membaca file .docx / .pdf di Nextcloud
+pyyaml
+ldap3
+openpyxl
+python-docx
+# optional:
+# sentence-transformers            # SCORER=embedding / deberta
+# torch transformers               # SCORER=deberta or LLM=transformers
+# bitsandbytes accelerate          # LLM=transformers on a GPU (4-bit)
+# pypdf                            # read .pdf files

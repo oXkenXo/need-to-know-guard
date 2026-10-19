@@ -1,27 +1,28 @@
-"""Chatbot RAG: ACL Nextcloud (lapis 1) -> guard 3 zona (lapis 2) -> LLM menjawab hanya dari dokumen yang lolos."""
+"""RAG chatbot: ACL from the servers (layer 1) -> need-to-know guard, three zones (layer 2) -> the LLM
+answers only from the items that were allowed."""
 import re
 
 import requests
 
 import audit
-import konfigurasi as K
+import config as K
 
-SISTEM = ("Kamu asisten dokumen kantor. Jawab dalam bahasa Indonesia, HANYA dari dokumen yang diberikan. "
-          "Kalau jawabannya tidak ada di dokumen, katakan tidak tahu. Sebutkan judul dokumen yang kamu pakai.")
+SYSTEM = ("You are a company document assistant. Answer ONLY from the documents and emails provided. "
+          "If the answer is not in them, say you don't know. Mention the titles you used.")
 _hf = {}
 
 
-def _llm(pertanyaan, potongan, mode=None):
+def _llm(question, passages, mode=None):
     mode = mode or K.LLM
-    konteks = "\n\n---\n\n".join(f"[{p['judul']}]\n{p['teks']}" for p in potongan)
-    if mode == "ollama":                                   # server OpenAI-compatible (Ollama, LM Studio, vLLM)
+    context = "\n\n---\n\n".join(f"[{p['title']}]\n{p['text']}" for p in passages)
+    prompt = f"Documents:\n{context}\n\nQuestion: {question}"
+    if mode == "ollama":                                    # any OpenAI-compatible server (Ollama, LM Studio, vLLM)
         r = requests.post(f"{K.LLM_URL}/chat/completions", timeout=180, json={
             "model": K.LLM_MODEL, "temperature": 0,
-            "messages": [{"role": "system", "content": SISTEM},
-                         {"role": "user", "content": f"Dokumen:\n{konteks}\n\nPertanyaan: {pertanyaan}"}]})
+            "messages": [{"role": "system", "content": SYSTEM}, {"role": "user", "content": prompt}]})
         r.raise_for_status()
         return r.json()["choices"][0]["message"]["content"].strip()
-    if mode == "transformers":                             # model Hugging Face lokal (4-bit kalau ada GPU)
+    if mode == "transformers":                              # local Hugging Face model (4-bit on a GPU)
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
         if "m" not in _hf:
@@ -30,41 +31,43 @@ def _llm(pertanyaan, potongan, mode=None):
                                    bnb_4bit_compute_dtype=torch.float16) if torch.cuda.is_available() else None
             _hf["m"] = AutoModelForCausalLM.from_pretrained(K.LLM_MODEL, device_map="auto", quantization_config=q)
         t, m = _hf["t"], _hf["m"]
-        x = t.apply_chat_template([{"role": "system", "content": SISTEM},
-                                   {"role": "user", "content": f"Dokumen:\n{konteks}\n\nPertanyaan: {pertanyaan}"}],
+        x = t.apply_chat_template([{"role": "system", "content": SYSTEM}, {"role": "user", "content": prompt}],
                                   add_generation_prompt=True, return_dict=True, return_tensors="pt").to(m.device)
         with torch.no_grad():
             out = m.generate(**x, max_new_tokens=300, do_sample=False, pad_token_id=t.pad_token_id or t.eos_token_id)
         return t.decode(out[0][x["input_ids"].shape[1]:], skip_special_tokens=True).strip()
-    # tanpa LLM: tampilkan kalimat paling relevan dari dokumen yang lolos
-    kata = {w for w in re.findall(r"\w{4,}", pertanyaan.lower())}
-    baris = []
-    for p in potongan[:2]:
-        kal = [s.strip() for s in re.split(r"(?<=[.!?])\s+|\n+", p["teks"]) if len(s.strip()) > 20]
-        kal.sort(key=lambda s: -len(kata & set(re.findall(r"\w{4,}", s.lower()))))
-        baris += [f"- **{p['judul']}**: {s}" for s in kal[:2]]
-    return "(Mode tanpa LLM: kutipan paling relevan)\n" + "\n".join(baris)
+    # no LLM: quote the most relevant sentences of the allowed items
+    words = set(re.findall(r"\w{4,}", question.lower()))
+    lines = []
+    for p in passages[:2]:
+        sents = [s.strip() for s in re.split(r"(?<=[.!?])\s+|\n+", p["text"]) if len(s.strip()) > 20]
+        sents.sort(key=lambda s: -len(words & set(re.findall(r"\w{4,}", s.lower()))))
+        lines += [f"- **{p['title']}**: {s}" for s in sents[:2]]
+    return "(No LLM configured: most relevant quotes)\n" + "\n".join(lines)
 
 
-def jawab(idx, penilai, user, pertanyaan):
-    boleh = list(idx["akses"].get(user, {}))                      # lapis 1: ACL dari Nextcloud
-    hits = [h for h in penilai.cari(pertanyaan, boleh) if h["sim"] >= K.RELEVAN_MIN]
-    fids = list(dict.fromkeys(h["fid"] for h in hits))
-    nilai = {r["fid"]: r for r in penilai.nilai(user, fids)}       # lapis 2: guard
-    audit.catat_chat(idx, user, list(nilai.values()))
-    lolos_f = [f for f in fids if nilai[f]["zona"] == "lolos"][:K.MAX_DOCS]
-    potongan = [{"judul": idx["files"][h["fid"]]["judul"], "teks": h["teks"]} for h in hits if h["fid"] in lolos_f]
-    if not potongan:
-        teks = ("Aku tidak menemukan dokumen yang boleh kupakai untuk menjawab ini."
-                + (" Ada dokumen yang perlu persetujuan pemilik; kamu bisa memintanya di bawah." if any(
-                    nilai[f]["zona"] == "tanya" for f in fids) else ""))
+def answer(idx, guard, user, question):
+    allowed_ids = list(idx["access"].get(user, {}))                       # layer 1: ACL from the servers
+    hits = [h for h in guard.search(question, allowed_ids) if h["sim"] >= K.MIN_RELEVANCE]
+    ids = list(dict.fromkeys(h["id"] for h in hits))
+    dec = {d["id"]: d for d in guard.decide(user, ids)}                    # layer 2: guard
+    audit.log_chat(idx, user, list(dec.values()))
+    use = [i for i in ids if dec[i]["zone"] == "allow"][:K.MAX_DOCS]
+    passages = [{"title": idx["items"][h["id"]]["title"], "text": h["text"]} for h in hits if h["id"] in use]
+    if not passages:
+        text = "I found nothing I'm allowed to use for this question."
+        if any(dec[i]["zone"] == "ask" for i in ids):
+            text += " Some items need the author's approval; you can request access below."
     else:
         try:
-            teks = _llm(pertanyaan, potongan)
-        except Exception as e:                                     # LLM mati -> tetap tampilkan kutipan
-            teks = f"(LLM '{K.LLM}' tidak bisa dihubungi: {e})\n" + _llm(pertanyaan, potongan, mode="tanpa")
-    info = lambda f: {"fid": f, "judul": idx["files"][f]["judul"], "path": idx["akses"][user][f]["path"],
-                      "zona": nilai[f]["zona"], "skor": nilai[f]["skor"], "alasan": nilai[f]["alasan"]}
-    return {"jawaban": teks, "sumber": [info(f) for f in lolos_f],
-            "tanya": [info(f) for f in fids if nilai[f]["zona"] == "tanya"],
-            "ditahan": [info(f) for f in fids if nilai[f]["zona"] == "tahan"]}
+            text = _llm(question, passages)
+        except Exception as e:                                             # LLM down -> still show quotes
+            text = f"(LLM '{K.LLM}' unreachable: {e})\n" + _llm(question, passages, mode="none")
+
+    def info(i):
+        it = idx["items"][i]
+        return {"id": i, "title": it["title"], "kind": it["kind"], "path": idx["access"][user][i]["path"],
+                "zone": dec[i]["zone"], "score": dec[i]["score"], "reason": dec[i]["reason"]}
+    return {"answer": text, "sources": [info(i) for i in use],
+            "ask": [info(i) for i in ids if dec[i]["zone"] == "ask"],
+            "held": [info(i) for i in ids if dec[i]["zone"] == "hold"]}

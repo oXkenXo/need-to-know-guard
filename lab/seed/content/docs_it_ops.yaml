@@ -1,0 +1,236 @@
+- path: IT/Asset Inventory 2026.xlsx
+  owner: nweiss
+  date: 2026-10-02
+  need: ["@it", gli]
+  sheet:
+    columns: [Asset tag, Type, Assigned to, Purchased, Status]
+    rows:
+      - [ML-0142, Laptop, Daniel Reyes, 2024-02-10, In use]
+      - [ML-0198, Laptop, Ethan Brooks, 2023-01-15, "Returned 30 Sep — to wipe"]
+      - [ML-0231, Laptop, Aisha Bello, 2026-10-10, In use]
+      - [ML-0177, Laptop, Alex Turner, 2023-07-01, In use]
+      - [SRV-03, Server, Server room, 2022-11-20, "Mail server (migrated Aug)"]
+
+- path: IT/Access Review Q3 2026.xlsx
+  owner: kpark
+  date: 2026-10-09
+  need: ["@it", pnair]
+  sheet:
+    columns: [Finding, System, Owner, Status]
+    rows:
+      - [Shared admin password on warehouse PCs, Operations PCs, Kevin Park, Open]
+      - [Temporary mailbox copy rule from migration, Mail server, Nora Weiss, "Open — check if still needed"]
+      - [Leaver accounts older than 7 days, Directory, Kevin Park, "Open — 1 account"]
+      - [Group membership after transfers, Directory, Kevin Park, "Open — 1 transfer"]
+      - [External shares without expiry, Nextcloud, Kevin Park, Not reviewed]
+
+- path: IT/Projects/Mail Migration - Runbook.docx
+  owner: nweiss
+  date: 2026-07-28
+  need: ["@it"]
+  body: |
+    # Mail Migration — Runbook (August 2026)
+    1. Freeze mailbox changes on Friday 18:00.
+    2. Sync mailboxes with imapsync (two passes).
+    3. Switch MX and webmail on Saturday morning.
+    4. Test plan: keep a copy rule for the CEO mailbox (dreyes → nweiss) for one week to verify delivery of high-priority mail.
+    5. Remove all temporary rules after sign-off.
+    Sign-off: Kevin Park, 12 August 2026.
+
+- path: IT/Security/Incident Report - Phishing - Aug 2026.docx
+  owner: nweiss
+  date: 2026-08-22
+  need: ["@it", "@managers"]
+  body: |
+    # Incident Report — Phishing (19 August 2026)
+    A fake "invoice overdue" email reached 11 staff. Two people entered their passwords on the fake page; both accounts were reset within 40 minutes. No data loss was found.
+    Actions: block sender domain, security awareness session on 3 September, enable sign-in alerts.
+
+- path: IT/Policies/Acceptable Use Policy.docx
+  owner: kpark
+  date: 2026-02-20
+  need: ["@all"]
+  body: |
+    # Acceptable Use Policy
+    - Company accounts are personal; never share passwords.
+    - Store work documents in Nextcloud team folders, not on USB sticks.
+    - Public links must have an expiry date and should be avoided for confidential files.
+    - Report suspicious emails to support@meridian.test.
+
+- path: IT/Policies/Backup Policy.docx
+  owner: kpark
+  date: 2026-03-11
+  need: ["@it", "@managers"]
+  body: |
+    # Backup Policy
+    Nextcloud and mail data are backed up nightly to the second site and kept for 35 days. Monthly backups are kept for 12 months. Restore tests are run every quarter.
+
+- path: Operations/Vendors/Vendor Contracts Summary.xlsx
+  owner: rshah
+  date: 2026-10-07
+  need: ["@operations", mchen]
+  sheet:
+    columns: [Vendor, Service, Annual value (USD), Renewal date, Notes]
+    rows:
+      - [Fleetline Partners, Partner fleet (north), 820000, 2027-01-31, "Price +4% proposed"]
+      - [CoastCarriers, Partner fleet (coast), 610000, 2027-03-31, ""]
+      - [PackRight, Packaging materials, 96000, 2026-12-31, "Tender in November"]
+      - [SecureDocs, Shredding, 4800, 2027-06-30, ""]
+
+- path: Operations/Vendors/Fleetline Renewal - Negotiation Notes.docx
+  owner: cmendes
+  date: 2026-10-13
+  need: [cmendes, rshah, mchen]
+  body: |
+    # Fleetline renewal — negotiation notes
+    Fleetline asks for +4% from February. Our ceiling (agreed with Mark): +2%, or +3% with a 2-year term.
+    Alternative: move 15% of north volume to CoastCarriers.
+
+- path: Operations/Logistics/Delivery Schedule - Week 43.xlsx
+  owner: enovak
+  date: 2026-10-17
+  need: ["@operations"]
+  sheet:
+    columns: [Day, Route, Vehicles, Planned stops, Driver lead]
+    rows:
+      - [Mon, North, 12, 310, R. Silva]
+      - [Tue, Coast, 9, 240, M. Okafor]
+      - [Wed, City, 18, 520, J. Park]
+      - [Thu, North, 13, 335, R. Silva]
+      - [Fri, City, 17, 505, J. Park]
+
+- path: Operations/Warehouse/Inventory Count - Sep 2026.xlsx
+  owner: cmendes
+  date: 2026-10-01
+  need: ["@operations", gli]
+  sheet:
+    columns: [Category, Units counted, Units in system, Difference]
+    rows:
+      - [Packaging boxes, 14200, 14450, -250]
+      - [Pallets, 860, 860, 0]
+      - [Scanners, 41, 44, -3]
+
+- path: Operations/Warehouse/Shift Plan - Oct 2026.xlsx
+  owner: enovak
+  date: 2026-09-29
+  need: ["@operations"]
+  sheet:
+    columns: [Week, Early shift lead, Late shift lead, Note]
+    rows:
+      - [W40, Emma Novak, R. Silva, "Supervisor vacant"]
+      - [W41, Emma Novak, J. Park, "Launch event Wed"]
+      - [W42, Carlos Mendes, R. Silva, ""]
+      - [W43, Emma Novak, J. Park, ""]
+
+- path: Operations/Safety/Safety Incident Log 2026.xlsx
+  owner: cmendes
+  date: 2026-10-03
+  need: ["@operations", skim]
+  sheet:
+    columns: [Date, Location, Incident, Severity, Action]
+    rows:
+      - [2026-03-14, Bay 2, Pallet fell from rack, Low, "Rack inspected"]
+      - [2026-07-08, Loading dock, Forklift near-miss, Medium, "Refresher training"]
+      - [2026-09-22, Bay 3, Slip on wet floor, Low, "Signage added"]
+
+- path: Operations/Procurement/Purchase Requests - Oct 2026.xlsx
+  owner: rshah
+  date: 2026-10-16
+  need: ["@operations", gli]
+  sheet:
+    columns: [PR number, Item, Amount (USD), Requested by, Status]
+    rows:
+      - [PR-2026-118, Handheld scanners (5), 4750, Emma Novak, Approved]
+      - [PR-2026-121, Rack safety nets, 2200, Carlos Mendes, Waiting for quote]
+      - [PR-2026-124, Event screens rental, 1800, Ben Carter, Paid]
+
+- path: Announcements/Holiday Schedule 2026-2027.docx
+  owner: skim
+  date: 2026-10-01
+  need: ["@all"]
+  body: |
+    # Holiday Schedule 2026–2027
+    The office is closed on 25–26 December and 1 January. The warehouse runs a reduced schedule from 24 December to 2 January; Operations will publish the rota by 15 November.
+
+- path: Announcements/All-Hands Q4 - Agenda.docx
+  owner: pnair
+  date: 2026-10-10
+  need: ["@all"]
+  body: |
+    # All-Hands Q4 — 23 October, 15:00, canteen + video call
+    1. Q3 results in one slide (Daniel)
+    2. Launch event highlights (Julia)
+    3. Warehouse and delivery update (Carlos)
+    4. Welcome new colleagues (Aisha Bello)
+    5. Q&A
+
+- path: Announcements/Office Move - Floor 3.docx
+  owner: pnair
+  date: 2026-09-01
+  need: ["@all"]
+  body: |
+    # Office Move — Floor 3
+    Finance and HR move to floor 3 on 14 November. Please pack personal items by Thursday 13 November; IT will move computers over the weekend.
+
+# ---------- personal
+- path: Drafts/IT roadmap 2027.md
+  owner: kpark
+  date: 2026-10-11
+  need: [kpark]
+  body: |
+    # IT roadmap 2027
+    - Outsource first-line support (decision after restructuring is approved)
+    - Single sign-on for Nextcloud and webmail
+    - Quarterly access reviews instead of yearly
+    - Replace warehouse PCs (shared admin password finding)
+
+- path: Drafts/Mail server notes.md
+  owner: nweiss
+  date: 2026-08-12
+  need: [nweiss]
+  body: |
+    # Mail server notes
+    - Postfix virtual aliases live in postfix-virtual.cf
+    - Temporary copy rule for CEO mailbox — remove after sign-off (remind myself!)
+    - Mailbox quotas: 10 GB default
+
+- path: Drafts/Peak season staffing.md
+  owner: cmendes
+  date: 2026-10-05
+  need: [cmendes]
+  body: |
+    # Peak season staffing (Nov–Dec)
+    - 6 temporary pickers from the agency from 10 Nov
+    - Emma acting supervisor until the role is decided in the restructuring
+    - Overtime cap: 10 hours per person per week
+
+- path: Drafts/Route optimisation ideas.md
+  owner: enovak
+  date: 2026-10-08
+  need: [enovak]
+  body: |
+    # Route optimisation ideas
+    - Thursday north route is overloaded: split into two waves.
+    - Use live tracking to re-sequence stops after 11:00.
+    - Ask Coastline-type software vendors for a pilot? (check with Carlos)
+
+- path: Drafts/PackRight tender - criteria.md
+  owner: rshah
+  date: 2026-10-12
+  need: [rshah]
+  body: |
+    # PackRight tender — evaluation criteria
+    - Price per 1,000 boxes (40%)
+    - Delivery lead time (25%)
+    - Recycled content (20%)
+    - Payment terms (15%)
+
+- path: Drafts/Warehouse handover notes.md
+  owner: ebrooks
+  date: 2026-09-26
+  need: [ebrooks, cmendes, enovak]
+  body: |
+    # Warehouse handover (Ethan)
+    - Key codes for bay 2 and 3 are with Carlos.
+    - Open safety action: signage near bay 3 (ordered).
+    - Agency temp contacts are in the shift plan folder.

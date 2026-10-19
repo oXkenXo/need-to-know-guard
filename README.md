@@ -1,30 +1,20 @@
-# Need-to-Know Guard · Storage Uji & Portal
+# Need-to-Know Guard — test environment and portal
 
-Bagian sistem dari riset **Need-to-Know Guard for Enterprise RAG** (MBC Lab, Telkom University).
+System part of the research **Need-to-Know Guard for Enterprise RAG** (MBC Lab, Telkom University).
 
-| Folder | Isi | Mulai dari |
+| Folder | Contents | Start with |
 |---|---|---|
-| [`storage/`](storage/) | Storage server uji: Nextcloud 34 + PostgreSQL 16 (Docker), 7 akun, 4 Team folders, 23 dokumen, 7 kasus ACL salah (K1–K7) | `storage/README.md` |
-| [`portal/`](portal/) | Portal karyawan: *Dokumen saya*, chatbot RAG dengan guard 3 zona, permintaan akses ke pemilik, dan panel admin (auditor ACL: Cabut / Abaikan) | `portal/README.md` |
+| [`lab/`](lab/) | **Meridian Labs**: a realistic enterprise test environment in Docker — directory (OpenLDAP), file server (Nextcloud), mail server (Postfix + Dovecot) with webmail. 19 employees, 77 documents, 68 emails, 12 planted access-control problems and an answer key | `lab/README.md` |
+| [`portal/`](portal/) | Employee portal: assistant (RAG) with a three-zone need-to-know guard, access requests, and an admin panel that audits permissions on the file and mail servers | `portal/README.md` |
+| [`storage/`](storage/) | Earlier, smaller test server (Nextcloud only, 7 employees, Indonesian documents). Kept for reference; superseded by `lab/` | `storage/README.md` |
 
-## Urutan menjalankan
+## Order
 
-1. **Storage:** ikuti `storage/README.md` (langkah 0–4), sampai keluar `SELESAI: 23 file, 3 share`.
-2. **Portal:**
-   ```bash
-   cd portal
-   pip install -r requirements.txt
-   cp portal.env.example portal.env     # isi NC_ADMIN_PASS = ADMIN_PASSWORD di storage/.env
-   python sinkron.py
-   python app.py                        # http://127.0.0.1:7860
-   ```
+1. `lab/`: `./setup.sh all` (needs Docker). It ends with `All checks passed.`
+2. `portal/`: `python connector.py`, then `python app.py` → http://127.0.0.1:7860
 
-`portal.env.example` sudah menunjuk ke `../storage/seed/accounts.env` dan `../storage/seed/manifest.csv`, jadi kedua folder harus tetap berdampingan.
+## Security
 
-Uji tanpa Docker (Nextcloud tiruan): lihat bagian "Uji tanpa Docker" di `portal/README.md`.
-
-## Keamanan
-
-- `.env`, `storage/seed/accounts.env`, dan `portal/portal.env` berisi password dan **tidak** di-commit (lihat `.gitignore`). Yang ada di repo hanya versi `.example`.
-- Kasus K1–K7 **sengaja salah**. Pakai hanya di lab lokal.
-- Notebook eksperimen (EnronQA, guard DeBERTa) tidak ada di repo ini.
+- Passwords live only in git-ignored files (`lab/.env`, `lab/seed/accounts.env`, `portal/portal.env`). The repo contains only `*.example` files.
+- The planted problems are **deliberately wrong** permissions. Use the lab only on your own machine.
+- The experiment notebooks (EnronQA, DeBERTa guard training) are not in this repository.

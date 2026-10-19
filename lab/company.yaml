@@ -1,0 +1,141 @@
+# Meridian Labs — fictional mid-size company used as an enterprise test environment.
+# Single source of truth for the directory (LDAP), Nextcloud team folders, mail lists,
+# planted access-control cases, and the answer key used to evaluate the guard.
+# Every name, number and document in this lab is fictional.
+
+company:
+  name: Meridian Labs
+  domain: meridian.test          # .test is reserved (RFC 2606) and never resolves on the internet
+  base_dn: dc=meridian,dc=test
+  today: 2026-10-19
+
+departments:
+  executive:  {name: Executive,  team_folder: Executive}
+  hr:         {name: Human Resources, team_folder: HR}
+  finance:    {name: Finance,    team_folder: Finance}
+  marketing:  {name: Marketing,  team_folder: Marketing}
+  it:         {name: IT,         team_folder: IT}
+  operations: {name: Operations, team_folder: Operations}
+
+# status: active | new_hire | transferred | resigned
+# Default directory groups = department + all-staff (+ extra groups below).
+# For people whose situation changed: 'groups' is what the DIRECTORY says now (including mistakes),
+# 'should_be' is what HR policy says now, 'groups_before' is the policy before 'changed'.
+people:
+  - {uid: dreyes,  name: Daniel Reyes,  title: Chief Executive Officer,        dept: executive,  manager: null,    joined: 2019-03-01}
+  - {uid: pnair,   name: Priya Nair,    title: Chief Operating Officer,        dept: executive,  manager: dreyes,  joined: 2020-01-13}
+  - {uid: skim,    name: Sarah Kim,     title: HR Manager,                     dept: hr,         manager: pnair,   joined: 2020-06-01}
+  - {uid: tbecker, name: Tom Becker,    title: HR Generalist,                  dept: hr,         manager: skim,    joined: 2022-02-14}
+  - {uid: lortiz,  name: Lina Ortiz,    title: Talent Acquisition Specialist,  dept: hr,         manager: skim,    joined: 2023-08-07}
+  - {uid: mchen,   name: Mark Chen,     title: Chief Financial Officer,        dept: finance,    manager: dreyes,  joined: 2019-09-02}
+  - {uid: gli,     name: Grace Li,      title: Senior Accountant,              dept: finance,    manager: mchen,   joined: 2021-04-19}
+  - {uid: ohaddad, name: Omar Haddad,   title: Payroll Officer,                dept: finance,    manager: mchen,   joined: 2022-10-03}
+  - uid: aturner
+    name: Alex Turner
+    title: Financial Analyst
+    dept: finance
+    manager: mchen
+    joined: 2021-07-05
+    status: transferred
+    changed: 2026-10-01
+    note: Moved from Marketing (Marketing Analyst) to Finance on 2026-10-01.
+    groups_before: [marketing]            # what HR policy said before the change date
+    groups: [finance, marketing]          # what the directory says now (C04: marketing never removed)
+    should_be: [finance]                  # what HR policy says now
+  - {uid: jrossi,  name: Julia Rossi,   title: Marketing Lead,                 dept: marketing,  manager: pnair,   joined: 2020-11-16}
+  - {uid: glin,    name: Grace Lin,     title: Content Specialist,             dept: marketing,  manager: jrossi,  joined: 2023-03-06}
+  - {uid: bcarter, name: Ben Carter,    title: Digital Marketing Specialist,   dept: marketing,  manager: jrossi,  joined: 2022-05-23}
+  - uid: abello
+    name: Aisha Bello
+    title: Graphic Designer
+    dept: marketing
+    manager: jrossi
+    joined: 2026-10-13
+    status: new_hire                      # C06: legitimate new hire with no work history yet
+  - {uid: kpark,   name: Kevin Park,    title: IT Manager,                     dept: it,         manager: pnair,   joined: 2020-03-09}
+  - {uid: nweiss,  name: Nora Weiss,    title: Systems Administrator,          dept: it,         manager: kpark,   joined: 2021-09-27}
+  - {uid: cmendes, name: Carlos Mendes, title: Operations Manager,             dept: operations, manager: pnair,   joined: 2020-08-17}
+  - {uid: enovak,  name: Emma Novak,    title: Logistics Coordinator,          dept: operations, manager: cmendes, joined: 2022-01-10}
+  - {uid: rshah,   name: Ravi Shah,     title: Procurement Officer,            dept: operations, manager: cmendes, joined: 2023-05-15}
+  - uid: ebrooks
+    name: Ethan Brooks
+    title: Warehouse Supervisor
+    dept: operations
+    manager: cmendes
+    joined: 2021-02-01
+    status: resigned
+    changed: 2026-10-01
+    note: Last working day 2026-09-30. Account was never disabled.   # C07
+    groups_before: [operations]
+    groups: [operations]
+    should_be: []
+
+# Extra directory groups (department groups and all-staff are created automatically).
+groups:
+  managers: [dreyes, pnair, skim, mchen, jrossi, kpark, cmendes]
+
+# Nextcloud team folders (groupfolders). Permissions: read | write (write = write+share+delete)
+team_folders:
+  Executive:     {executive: write}
+  HR:            {hr: write}
+  Finance:       {finance: write}
+  Marketing:     {marketing: write}
+  IT:            {it: write}
+  Operations:    {operations: write}
+  Announcements: {all-staff: read, hr: write, executive: write}
+
+# Mail: every person gets <uid>@meridian.test. Lists expand to group members.
+mail_lists:
+  all-staff: {group: all-staff}
+  exec:      {group: executive}
+  managers:  {group: managers}
+  hr:        {group: hr}
+  finance:   {group: finance}
+  marketing: {group: marketing}
+  it:        {group: it}
+  ops:       {group: operations}
+  ap:        {members: [gli, mchen]}          # accounts payable role mailbox
+  support:   {members: [kpark, nweiss]}       # IT helpdesk role mailbox
+
+# Forwarding rules (postfix virtual aliases that keep a copy for the original owner too).
+mail_forwards:
+  - from: dreyes
+    to: nweiss
+    since: 2026-08-04
+    reason: Copy of CEO mailbox during the mail-server migration test; never removed.
+    case: C11
+
+# File shares created by employees (legitimate ones are decoys for the auditor).
+# permissions: read (default) | write
+shares:
+  - {case: C01, owner: skim,    path: HR/Compensation 2026,                         type: group, to: all-staff,  legit: false,
+     story: Sarah meant to share the Benefits Guide next to it with all staff and picked the parent folder.}
+  - {case: C02, owner: tbecker, path: HR/Performance Reviews/2026-Q3/Review - Ben Carter.docx, type: link,
+     legit: false, story: Public link created to send the review to an external leadership coach; never expired.}
+  - {case: C05, owner: jrossi,  path: Marketing/Q4 Campaign,                        type: user,  to: enovak,     legit: false,
+     story: Shared for the launch-event logistics (ended 2026-10-10). The folder now also holds Q1 2027 plans and agency rates.}
+  - {case: C08, owner: pnair,   path: Executive/Project Falcon,                     type: group, to: finance,    legit: false,
+     story: Shared with the whole Finance group for due diligence; only the CFO is on the deal team.}
+  - {owner: pnair,   path: Executive/Project Falcon,                         type: user,  to: mchen,     legit: true, permissions: write,
+     story: The CFO is on the deal team and edits the valuation model.}
+  # legitimate shares (decoys)
+  - {owner: skim,    path: HR/Onboarding/Aisha Bello,                         type: user,  to: abello,    legit: true}
+  - {owner: gli,     path: Finance/Policies/Expense Policy 2026.docx,         type: group, to: all-staff, legit: true}
+  - {owner: kpark,   path: IT/Policies/Acceptable Use Policy.docx,            type: group, to: all-staff, legit: true}
+  - {owner: rshah,   path: Operations/Vendors/Vendor Contracts Summary.xlsx,  type: user,  to: mchen,     legit: true}
+  - {owner: jrossi,  path: Marketing/Press Kit,                               type: link,                 legit: true, expire: 2027-06-30}
+
+# All planted cases. 'fix' is what an administrator should do.
+cases:
+  C01: {source: files, kind: over-broad group share,  fix: Remove the all-staff share on HR/Compensation 2026.}
+  C02: {source: files, kind: public link,             fix: Delete the public link (or set password + expiry).}
+  C03: {source: files, kind: misplaced file,          fix: Move "Restructuring Plan 2027 - DRAFT.docx" from Announcements to Executive.}
+  C04: {source: directory, kind: stale group membership after transfer, fix: Remove aturner from the marketing group.}
+  C05: {source: files, kind: stale project share,     fix: Remove the share of Marketing/Q4 Campaign with enovak.}
+  C06: {source: directory, kind: new hire without history (legitimate), fix: None. Route her documents through owner approval until she has history.}
+  C07: {source: directory, kind: former employee still active, fix: Disable ebrooks in the directory (HR/IAM process, outside the guard).}
+  C08: {source: files, kind: over-broad group share,  fix: Share Executive/Project Falcon with mchen only.}
+  C09: {source: mail,  kind: misdirected email (autocomplete), fix: Purge the message from glin's mailbox; resend to gli.}
+  C10: {source: mail,  kind: wrong distribution list, fix: Purge the restructuring draft from all-staff mailboxes except the exec team.}
+  C11: {source: mail,  kind: stale forwarding rule,   fix: Remove the dreyes -> nweiss forward; purge forwarded copies.}
+  C12: {source: mail,  kind: over-sharing forward,    fix: Purge the forwarded budget email from bcarter's mailbox.}

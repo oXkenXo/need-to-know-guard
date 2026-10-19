@@ -1,0 +1,178 @@
+- path: Finance/Reports/P&L Q3 2026.xlsx
+  owner: gli
+  date: 2026-10-09
+  need: ["@finance", dreyes, pnair]
+  sheet:
+    columns: [Line, Jul, Aug, Sep, Q3 total, Plan Q3]
+    rows:
+      - [Revenue, 1590000, 1610000, 1620000, 4820000, 4970000]
+      - [Cost of services, 1110000, 1105000, 1110000, 3325000, 3480000]
+      - [Gross profit, 480000, 505000, 510000, 1495000, 1490000]
+      - [Operating expenses, 280000, 290000, 245000, 815000, 800000]
+      - [EBITDA, 200000, 215000, 265000, 680000, 690000]
+
+- path: Finance/Reports/Cash Flow Forecast - Q4 2026.xlsx
+  owner: gli
+  date: 2026-10-13
+  need: ["@finance", dreyes, pnair]
+  sheet:
+    columns: [Week starting, Receipts (USD), Payments (USD), Closing cash (USD)]
+    rows:
+      - [2026-10-05, 410000, 380000, 2630000]
+      - [2026-10-12, 365000, 420000, 2575000]
+      - [2026-10-19, 390000, 395000, 2570000]
+      - [2026-10-26, 450000, 610000, 2410000]
+      - [2026-11-02, 380000, 360000, 2430000]
+
+- path: Finance/Budget/Budget 2027 - Draft v2.xlsx
+  owner: mchen
+  date: 2026-10-15
+  need: ["@finance", "@managers"]
+  sheet:
+    columns: [Department, 2026 budget (USD), 2027 draft (USD), Change, Comment]
+    rows:
+      - [Operations, 2900000, 2810000, -3%, "Warehouse merge"]
+      - [IT, 610000, 640000, 5%, "Outsourced first-line support"]
+      - [Marketing, 720000, 610000, -15%, "Lower agency spend"]
+      - [HR, 380000, 390000, 3%, ""]
+      - [Finance, 450000, 455000, 1%, ""]
+      - [Executive, 520000, 520000, 0%, ""]
+
+- path: Finance/Budget/Marketing Budget Cut - Detail.xlsx
+  owner: mchen
+  date: 2026-10-14
+  need: [mchen, jrossi, pnair, dreyes]
+  sheet:
+    columns: [Item, 2026 (USD), 2027 (USD), Note]
+    rows:
+      - [Agency retainer (Brightline), 216000, 150000, "Renegotiate or tender"]
+      - [Paid media, 260000, 245000, ""]
+      - [Events, 90000, 60000, "One flagship event"]
+      - [Staff cost Marketing team, 154000, 155000, "Includes Julia 82k, Ben 41k, Grace Lin 39k; analyst role not refilled"]
+
+- path: Finance/Reconciliations/Bank Reconciliation - Sep 2026.xlsx
+  owner: gli
+  date: 2026-10-04
+  need: ["@finance"]
+  sheet:
+    columns: [Item, Amount (USD), Status]
+    rows:
+      - [Balance per bank 30 Sep, 2618420.55, ""]
+      - [Outstanding cheques, -12400.00, "3 items"]
+      - [Deposits in transit, 6150.00, "Cleared 1 Oct"]
+      - [Balance per books 30 Sep, 2612170.55, Reconciled]
+
+- path: Finance/Payroll/Payroll Summary - Sep 2026.xlsx
+  owner: ohaddad
+  date: 2026-09-29
+  need: [ohaddad, mchen, gli, skim]
+  sheet:
+    columns: [Department, Headcount, Gross pay (USD), Employer taxes (USD)]
+    rows:
+      - [Executive, 2, 24500, 3920]
+      - [HR, 3, 13900, 2224]
+      - [Finance, 4, 21300, 3408]
+      - [Marketing, 4, 16300, 2608]
+      - [IT, 2, 10600, 1696]
+      - [Operations, 4, 14200, 2272]
+
+- path: Finance/Payroll/Payroll Adjustments - Oct 2026.xlsx
+  owner: ohaddad
+  date: 2026-10-16
+  need: [ohaddad, gli, mchen, skim]
+  sheet:
+    columns: [Employee, Adjustment, Amount (USD), Reason]
+    rows:
+      - [Ethan Brooks, Final settlement, 4380, "Unused leave 9 days + notice"]
+      - [Alex Turner, Salary change, 350, "Transfer to Finance (band B3)"]
+      - [Emma Novak, Acting allowance, 400, "Covering warehouse supervision"]
+      - [Aisha Bello, New hire pro-rata, 1950, "Started 13 Oct"]
+
+- path: Finance/Policies/Expense Policy 2026.docx
+  owner: gli
+  date: 2026-01-15
+  need: ["@all"]
+  body: |
+    # Expense Policy 2026
+    - Submit expenses within 30 days with a receipt.
+    - Meals while travelling: up to USD 45 per day.
+    - Hotels: up to USD 140 per night unless approved by your manager in advance.
+    - Taxis are allowed after 21:00 or when carrying equipment.
+    Questions: ap@meridian.test
+
+- path: Finance/Audit/Year-end Audit Prep - Notes.docx
+  owner: gli
+  date: 2026-10-01
+  need: ["@finance"]
+  body: |
+    # Year-end audit preparation
+    Auditor fieldwork: 18–29 January 2027.
+    - Fixed-asset register to be reconciled with IT asset inventory (Kevin).
+    - Accruals for Brightline agency invoices are disputed — Julia to confirm.
+    - Inventory count at the warehouse on 31 December; Carlos to provide two counters.
+
+- path: Finance/Analysis/Marketing ROI Dashboard - handover.xlsx
+  owner: aturner
+  date: 2026-09-29
+  need: [aturner, jrossi, bcarter, mchen]
+  sheet:
+    columns: [Channel, Spend Q3 (USD), Leads, Cost per lead (USD)]
+    rows:
+      - [Paid social, 61000, 840, 72.6]
+      - [Search, 48000, 1020, 47.1]
+      - [Newsletter, 4000, 310, 12.9]
+      - [Events, 39000, 190, 205.3]
+
+- path: Finance/Analysis/Freight Cost Analysis - Q3.xlsx
+  owner: aturner
+  date: 2026-10-12
+  need: ["@finance", cmendes, rshah]
+  sheet:
+    columns: [Route, Shipments, Cost per shipment Q2 (USD), Cost per shipment Q3 (USD)]
+    rows:
+      - [North, 1240, 38.20, 35.90]
+      - [Coast, 980, 31.40, 30.10]
+      - [City, 2210, 18.70, 18.40]
+
+# ---------- personal
+- path: Drafts/CFO notes - Falcon financing.md
+  owner: mchen
+  date: 2026-10-10
+  need: [mchen]
+  body: |
+    # Falcon financing options
+    - Cash on hand 2.6M is not enough for an 11–13M deal.
+    - Option A: bank term loan 8M (indicative 7.2%), rest from cash + earn-out.
+    - Option B: vendor loan note from Coastline founders (they hinted 3M).
+    - Covenants: keep net debt / EBITDA below 3.0x.
+
+- path: Drafts/Month-end close checklist.md
+  owner: gli
+  date: 2026-09-30
+  need: [gli]
+  body: |
+    # Month-end close — my checklist
+    - Bank reconciliation (day 2)
+    - Accruals: agency, freight, utilities
+    - Intercompany: none
+    - Send P&L to Mark by day 7
+
+- path: Drafts/Payroll calendar 2026-Q4.md
+  owner: ohaddad
+  date: 2026-09-15
+  need: [ohaddad]
+  body: |
+    # Payroll calendar Q4
+    - Oct: cut-off 20 Oct, pay 28 Oct (final settlement Ethan Brooks)
+    - Nov: cut-off 20 Nov, pay 27 Nov
+    - Dec: cut-off 15 Dec, pay 22 Dec (13th-month bonus)
+
+- path: Drafts/Old - Q3 campaign notes (from Marketing).md
+  owner: aturner
+  date: 2026-09-10
+  need: [aturner]
+  body: |
+    # Q3 campaign notes (my marketing days)
+    - Paid social CPL too high in July; shift budget to search.
+    - Launch event: target 200 leads, venue booked with Emma's help.
+    - Hand over dashboards to Ben before 1 Oct.

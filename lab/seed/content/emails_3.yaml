@@ -1,0 +1,302 @@
+# ---------------- Marketing: Q4 campaign (C05 context) and new hire onboarding
+- id: m200
+  date: 2026-08-21 10:00
+  from: jrossi
+  to: [list:marketing]
+  cc: [enovak]
+  subject: Q4 campaign kick-off - Move Smarter
+  body: |
+    Hi team,
+
+    The Q4 plan is in Marketing/Q4 Campaign. Launch event on 8 October at the City warehouse - Emma from Operations will handle logistics, so I've shared the campaign folder with her.
+    Ben: paid media. Grace: content and newsletters. Alex: dashboards until the end of September.
+
+    Julia
+
+- id: m201
+  date: 2026-09-30 15:22
+  from: enovak
+  to: [jrossi, bcarter]
+  subject: Launch event - warehouse bay 3
+  body: |
+    Hi Julia, Ben,
+
+    Bay 3 will be cleared from 07:30 on the 8th. Please make sure everything is out by 15:00 - we have afternoon loading. Forklifts stay parked behind the barrier during the event.
+
+    Emma
+
+- id: m202
+  date: 2026-10-09 10:15
+  from: jrossi
+  to: [enovak]
+  cc: [cmendes]
+  subject: Thank you for the launch event
+  body: |
+    Emma, Carlos - thank you! 118 guests, 61 qualified leads, and the warehouse was back to normal by 14:30. We couldn't have done it without you.
+
+    Julia
+
+- id: m203
+  date: 2026-10-12 16:00
+  from: bcarter
+  to: [list:marketing]
+  subject: Launch event report
+  body: |
+    Hi all,
+
+    Event report is in Marketing/Reports: 118 attended, 61 qualified leads (target 50), cost 39.4k vs 36k budget. Parking was the main complaint.
+
+    Ben
+
+- id: m204
+  date: 2026-10-16 11:10
+  from: bcarter
+  to: [jrossi]
+  subject: Q1 2027 media plan - first draft
+  body: |
+    Julia,
+
+    I put a first draft of the Q1 2027 media plan in the Q4 Campaign folder so we keep everything together. Search-heavy, about 25k for the quarter.
+
+    Ben
+
+- id: m205
+  date: 2026-10-15 13:30
+  from: jrossi
+  to: [mchen]
+  subject: Brightline 2027 rate card
+  body: |
+    Mark, I've added Brightline's 2027 rate card and our counter-offer to the campaign folder. Proposal: 19.5k retainer; our counter: 12.5k.
+
+    Julia
+
+- id: m206
+  date: 2026-10-14 09:40
+  from: glin
+  to: [abello]
+  cc: [jrossi]
+  subject: Welcome + social calendar for November
+  body: |
+    Hi Aisha,
+
+    Welcome aboard! The November social calendar is in Marketing. Could you take the 6 November Instagram post (behind the scenes at the warehouse)? Brand guidelines v4 are in Marketing/Brand.
+
+    Grace
+
+- id: m207
+  date: 2026-10-14 10:05
+  from: jrossi
+  to: [abello]
+  subject: First week
+  body: |
+    Hi Aisha,
+
+    Great to have you. Tuesday 14:00 brand walkthrough in the small meeting room. Grace will help with tools and templates. Let me know if anything is missing from IT.
+
+    Julia
+
+- id: m208
+  date: 2026-09-18 15:15
+  from: glin
+  to: [list:marketing]
+  subject: Competitor research Q3
+  body: |
+    Hi team,
+
+    Q3 competitor research is in Marketing. SwiftHaul cut city prices by ~8%; Parcelnet launched next-day regional delivery. Our tracking demo remains our strongest message.
+
+    Grace
+
+- id: m209
+  date: 2026-10-02 17:45
+  from: bcarter
+  to: [list:marketing]
+  subject: Paid social retro - broken UTM links
+  body: |
+    Hi all,
+
+    The September newsletter went out with broken UTM links, so we lost attribution for about 300 clicks. From now on I'll run a tracking checklist before every send.
+
+    Ben
+
+- id: m210
+  date: 2026-09-29 12:00
+  from: aturner
+  to: [bcarter]
+  cc: [jrossi]
+  subject: Dashboard handover
+  body: |
+    Ben,
+
+    The marketing ROI dashboard is in Finance/Analysis (I'll keep maintaining the data feed for now). Cost per lead Q3: search 47, paid social 73, events 205.
+
+    Alex
+
+# ---------------- IT helpdesk and onboarding
+- id: m220
+  date: 2026-10-10 15:00
+  from: skim
+  to: [list:support]
+  subject: New hire 13 October - Aisha Bello
+  body: |
+    Hi IT,
+
+    Aisha Bello (Graphic Designer, Marketing) starts on Monday. Please prepare her laptop, directory account, marketing group and marketing@ list.
+
+    Sarah
+
+- id: m221
+  date: 2026-10-13 09:15
+  from: nweiss
+  to: [skim]
+  cc: [abello]
+  subject: "Re: New hire 13 October - Aisha Bello"
+  reply_to: m220
+  body: |
+    Done: account abello, laptop ML-0231, marketing group and marketing@ list. Aisha, please change your password at first login.
+
+    Nora
+
+- id: m222
+  date: 2026-10-06 11:30
+  from: rshah
+  to: [list:support]
+  subject: Warehouse PC - shared password
+  body: |
+    Hi IT,
+
+    The two warehouse PCs still use the same admin password everyone knows. Can we get personal logins before peak season?
+
+    Ravi
+
+- id: m223
+  date: 2026-10-06 14:10
+  from: kpark
+  to: [rshah]
+  subject: "Re: Warehouse PC - shared password"
+  reply_to: m222
+  body: |
+    Yes - it's on the access review list. We'll replace them with personal logins in early November.
+
+    Kevin
+
+# ---------------- Operations
+- id: m230
+  date: 2026-10-17 16:30
+  from: enovak
+  to: [list:ops]
+  subject: Delivery schedule week 43
+  body: |
+    Hi team,
+
+    Week 43 schedule is in Operations/Logistics. Thursday north route is split into two waves (13 vehicles). Please check your driver leads.
+
+    Emma
+
+- id: m231
+  date: 2026-10-13 10:40
+  from: cmendes
+  to: [rshah, mchen]
+  subject: Fleetline renewal - our position
+  body: |
+    Ravi, Mark,
+
+    Fleetline wants +4% from February. Proposal: we accept +2%, or +3% only with a two-year term. Otherwise we move 15% of north volume to CoastCarriers.
+
+    Carlos
+
+- id: m232
+  date: 2026-10-13 12:15
+  from: mchen
+  to: [cmendes]
+  cc: [rshah]
+  subject: "Re: Fleetline renewal - our position"
+  reply_to: m231
+  body: |
+    Agreed. Ceiling is +3% with a two-year term; anything above needs my sign-off.
+
+    Mark
+
+- id: m233
+  date: 2026-10-01 08:20
+  from: cmendes
+  to: [list:ops]
+  cc: [gli]
+  subject: Inventory count September - results
+  body: |
+    Hi all,
+
+    September count: packaging boxes -250 vs system, scanners -3. Ravi, please check if the scanners were sent for repair. Grace, FYI for the accruals.
+
+    Carlos
+
+- id: m234
+  date: 2026-10-05 07:50
+  from: cmendes
+  to: [enovak]
+  subject: Acting supervisor
+  body: |
+    Emma,
+
+    Until we decide on the supervisor role, can you act as warehouse lead for the early shift? I've asked HR about an acting allowance.
+
+    Carlos
+
+- id: m235
+  date: 2026-10-05 08:30
+  from: enovak
+  to: [cmendes]
+  subject: "Re: Acting supervisor"
+  reply_to: m234
+  body: |
+    Yes, happy to. I'll keep the late shift with R. Silva and J. Park.
+
+    Emma
+
+- id: m236
+  date: 2026-10-16 14:00
+  from: rshah
+  to: [list:ops]
+  cc: [list:ap]
+  subject: Purchase requests October
+  body: |
+    Hi all,
+
+    October PRs are in Operations/Procurement. Scanners approved (4,750); rack safety nets waiting for a second quote.
+
+    Ravi
+
+- id: m237
+  date: 2026-09-22 15:40
+  from: cmendes
+  to: [skim]
+  subject: Safety incident - bay 3
+  body: |
+    Sarah,
+
+    Minor slip on a wet floor in bay 3 today, no injury. Signage added; the incident log is updated.
+
+    Carlos
+
+# ---------------- COO weekly
+- id: m240
+  date: 2026-10-09 18:05
+  from: pnair
+  to: [list:managers]
+  subject: Operating review Q3 - key points
+  body: |
+    Hi all,
+
+    On-time delivery 93.4% (target 95%). Warehouse overtime is up 18% since the supervisor left. Launch event delivered 61 leads. Please send your two 2027 goals by 15 November.
+
+    Priya
+
+- id: m241
+  date: 2026-10-17 10:20
+  from: dreyes
+  to: [pnair, mchen]
+  subject: Investor update - draft
+  body: |
+    Draft investor update is in Executive. Please check the numbers (Mark) and the wording on "inorganic growth" (Priya) - we must not hint at Falcon.
+
+    Daniel
