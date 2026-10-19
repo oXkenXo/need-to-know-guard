@@ -1,0 +1,16 @@
+Usulan Anggaran Divisi 2027
+Disusun oleh: Dodi Hidayat (Finance)
+Untuk: rapat anggaran direksi November 2026
+
+Divisi        Usulan 2027        Anggaran 2026     Perubahan
+HR            Rp 1,2 miliar      Rp 1,1 miliar     +9%
+Marketing     Rp 2,6 miliar      Rp 2,3 miliar     +13%
+Finance       Rp 0,9 miliar      Rp 0,85 miliar    +6%
+Operasional   Rp 3,4 miliar      Rp 3,9 miliar     -13%
+
+Asumsi:
+- Inflasi biaya 4%
+- Penjualan 2027 naik 15%
+- Biaya pesangon program efisiensi Operasional (Rp 920 juta) dicatat terpisah sebagai biaya satu kali.
+
+Catatan: angka Marketing termasuk anggaran media Rp 1,9 miliar sesuai strategi 2027. Finance meminta setiap divisi mengirim rincian per kegiatan paling lambat 31 Oktober.

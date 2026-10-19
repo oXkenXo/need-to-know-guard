@@ -1,0 +1,12 @@
+# rahasia (jangan pernah di-commit)
+.env
+portal.env
+**/seed/accounts.env
+# hasil jalan
+portal/data/
+portal/uji/data/
+portal/uji/storage/
+portal/uji/fake.log
+portal/uji/fake.pid
+__pycache__/
+*.pyc

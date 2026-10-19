@@ -1,0 +1,11 @@
+Catatan Kerja - Rekonsiliasi Oktober 2026
+Andi Pratama (Finance)
+
+Hal yang perlu dicek untuk rekonsiliasi akhir Oktober:
+1. Setoran distributor sore hari sering tercatat di bank tanggal berikutnya. Minta kasir mencatat jam setoran.
+2. Biaya administrasi bank bulanan (sekitar Rp 1,2 juta) harus dibukukan sebelum tutup buku.
+3. Cocokkan pembayaran vendor iklan Kampanye Q4 dengan invoice yang sudah dicek Dodi.
+4. Ada dua cek vendor dari September yang belum dicairkan (total Rp 1.250.000); konfirmasi ke vendor.
+
+Target: rekonsiliasi Oktober selesai 4 November, diperiksa Dodi tanggal 5 November.
+Pertanyaan untuk Dodi: apakah piutang distributor di atas 60 hari perlu dicadangkan sebagai kerugian?

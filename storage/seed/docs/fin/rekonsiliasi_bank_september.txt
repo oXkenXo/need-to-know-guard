@@ -1,0 +1,17 @@
+Rekonsiliasi Bank - September 2026
+Dikerjakan oleh: Andi Pratama (Finance)
+Diperiksa oleh: Dodi Hidayat
+
+Rekening giro operasional:
+Saldo menurut bank 30 September: Rp 3.448.500.000
+Saldo menurut buku besar: Rp 3.420.000.000
+Selisih: Rp 28.500.000
+
+Penjelasan selisih:
+1. Setoran penjualan distributor tanggal 30 September belum tercatat di buku: Rp 31.000.000
+2. Biaya administrasi bank belum dibukukan: Rp 1.250.000
+3. Cek pembayaran vendor yang belum dicairkan: Rp 1.250.000
+
+Setelah penyesuaian, selisih = Rp 0.
+
+Tindak lanjut: jurnal penyesuaian sudah dibuat tanggal 3 Oktober. Prosedur pencatatan setoran sore hari perlu diperbaiki supaya tidak terlambat masuk buku.

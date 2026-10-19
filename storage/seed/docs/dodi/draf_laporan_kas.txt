@@ -1,0 +1,15 @@
+Draf Format Laporan Kas Mingguan (usulan perbaikan)
+Disusun oleh: Dodi Hidayat
+
+Masalah format lama: penerimaan dan pengeluaran tidak dipisah per sumber, sehingga sulit melihat penyebab perubahan kas.
+
+Format baru yang diusulkan:
+1. Saldo awal minggu
+2. Penerimaan per kanal: online, distributor, lain-lain
+3. Pengeluaran per kategori: gaji, vendor, sewa, pajak, iklan
+4. Saldo akhir dan perbandingan dengan minggu lalu
+5. Daftar piutang di atas 60 hari
+6. Catatan risiko kas untuk 4 minggu ke depan
+
+Laporan dikirim setiap Senin pukul 10.00 ke Manajer Finance dan direksi.
+Mulai dipakai: minggu pertama November 2026.

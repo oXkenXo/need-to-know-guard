@@ -1,0 +1,20 @@
+Catatan Wawancara Kandidat - Posisi Staf Akuntansi
+Pewawancara: Sari Wulandari (HR)
+Tanggal: 11 November 2026
+
+Kandidat 1 - Lulusan S1 Akuntansi, pengalaman 2 tahun di kantor akuntan publik.
+Kelebihan: paham rekonsiliasi bank dan PPN, komunikasi jelas.
+Kekurangan: ekspektasi gaji Rp 7.500.000, di atas rentang.
+Nilai: 4/5
+
+Kandidat 2 - Fresh graduate, IPK 3,62.
+Kelebihan: nilai tes tertulis tertinggi (88), cepat belajar.
+Kekurangan: belum pernah memakai software akuntansi.
+Nilai: 3,5/5
+
+Kandidat 3 - Pengalaman 1 tahun sebagai admin keuangan.
+Kelebihan: terbiasa input jurnal harian.
+Kekurangan: kurang teliti pada studi kasus rekonsiliasi.
+Nilai: 3/5
+
+Rekomendasi ke user (Dodi): lanjutkan kandidat 1 dan 2 ke wawancara user.

@@ -1,0 +1,24 @@
+pemilik,path,file_lokal,perlu_tahu,kasus
+budi,HR/Gaji 2026/Gaji Manajer 2026.txt,hr/gaji_manajer_2026.txt,budi; sari,K1
+budi,HR/Rekrutmen Staf Finance.txt,hr/rekrutmen_staf_finance.txt,budi; sari,
+sari,HR/Jadwal Pelatihan Karyawan.txt,hr/jadwal_pelatihan_karyawan.txt,budi; sari,
+budi,Pengumuman/Rencana PHK 2026.txt,hr/rencana_phk_2026.txt,budi; sari,K3
+budi,Pengumuman/Libur Akhir Tahun 2026.txt,hr/libur_akhir_tahun_2026.txt,budi; sari; maya; andi; dodi; rina,
+maya,Marketing/Kampanye Q4/Anggaran Iklan Q4.txt,mkt/anggaran_iklan_q4.txt,maya; rina; dodi,K5
+maya,Marketing/Kampanye Q4/Rencana Iklan Q1 2027.txt,mkt/rencana_iklan_q1_2027.txt,maya; rina,K5
+maya,Marketing/Strategi Kampanye 2027.txt,mkt/strategi_kampanye_2027.txt,maya; rina,K4; K7
+maya,Marketing/Riset Kompetitor Q3.txt,mkt/riset_kompetitor_q3.txt,maya; rina,
+dodi,Finance/Laporan Kas Oktober.txt,fin/laporan_kas_oktober.txt,dodi; andi,
+andi,Finance/Rekonsiliasi Bank September.txt,fin/rekonsiliasi_bank_september.txt,dodi; andi,
+dodi,Finance/Anggaran Divisi 2027.txt,fin/anggaran_divisi_2027.txt,dodi; andi,
+budi,Kerjaan Budi/Notulen Rapat HR Oktober.txt,budi/notulen_rapat_hr_oktober.txt,budi,
+budi,Kerjaan Budi/Draf Kebijakan Cuti.txt,budi/draf_kebijakan_cuti.txt,budi,
+sari,Kerjaan Sari/Evaluasi Kinerja Q3.txt,sari/evaluasi_kinerja_q3.txt,budi; sari,K2
+sari,Kerjaan Sari/Catatan Wawancara Kandidat.txt,sari/catatan_wawancara_kandidat.txt,sari,
+maya,Kerjaan Maya/Ide Konten Media Sosial.txt,maya/ide_konten_media_sosial.txt,maya,
+maya,Kerjaan Maya/Laporan Event Pameran.txt,maya/laporan_event_pameran.txt,maya,
+andi,Kerjaan Andi/Riset Pasar 2025 (saat di Marketing).txt,andi/riset_pasar_2025.txt,andi; maya,K4
+andi,Kerjaan Andi/Brief Kampanye 2025 (saat di Marketing).txt,andi/brief_kampanye_2025.txt,andi; maya,K4
+andi,Kerjaan Andi/Catatan Rekonsiliasi Oktober.txt,andi/catatan_rekonsiliasi_oktober.txt,andi,
+dodi,Kerjaan Dodi/Draf Laporan Kas.txt,dodi/draf_laporan_kas.txt,dodi,
+dodi,Kerjaan Dodi/Catatan Proyek Kampanye Q4.txt,dodi/catatan_proyek_kampanye_q4.txt,dodi,K5
